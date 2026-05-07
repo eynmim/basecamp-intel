@@ -51,25 +51,36 @@ jobs:
           set -euo pipefail
           target=""
 
-          if [ -n "${DISPATCH_FILE:-}" ]; then
+          # Trim whitespace from the dispatch input — easy to paste with a stray space.
+          DISPATCH_FILE="$(printf '%s' "${DISPATCH_FILE:-}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+
+          if [ -n "$DISPATCH_FILE" ]; then
             target="$DISPATCH_FILE"
             echo "Using workflow_dispatch input: $target"
           else
-            mapfile -t changed < <(git diff --name-only --diff-filter=AM "${{ github.event.before }}" "${{ github.sha }}" -- 'reports/' 2>/dev/null || true)
+            # Path 1: files added/modified in the push (only meaningful for `on: push`).
             html_pick=""
             md_pick=""
-            for f in "${changed[@]}"; do
-              case "$f" in
-                reports/*.html) html_pick="$f" ;;
-                reports/*.md)   md_pick="$f" ;;
-              esac
-            done
+            if [ -n "${{ github.event.before }}" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+              mapfile -t changed < <(git diff --name-only --diff-filter=AM "${{ github.event.before }}" "${{ github.sha }}" -- 'reports/' 2>/dev/null || true)
+              for f in "${changed[@]}"; do
+                case "$f" in
+                  reports/*.html|reports/*/*.html) html_pick="$f" ;;
+                  reports/*.md|reports/*/*.md)    md_pick="$f" ;;
+                esac
+              done
+            fi
+
             if [ -n "$html_pick" ]; then
               target="$html_pick"
             elif [ -n "$md_pick" ]; then
               target="$md_pick"
             else
-              target=$(ls -t reports/**/*.{html,md} reports/*.{html,md} 2>/dev/null | head -n 1 || true)
+              # Path 2 (workflow_dispatch with no input): find the newest report
+              # under reports/ recursively. Sorted by mtime descending; falls
+              # back to alphabetical (filenames are YYYY-MM-DD so that works too).
+              target=$(find reports -type f \( -name '*.md' -o -name '*.html' \) ! -name '.gitkeep' -printf '%T@ %p\n' 2>/dev/null \
+                       | sort -rn | head -n 1 | cut -d' ' -f2-)
             fi
           fi
 
