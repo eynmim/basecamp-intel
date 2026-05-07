@@ -48,9 +48,10 @@ Pipeline details:
 
 ## Report format the routine must produce
 
-The script auto-splits on these two structural markers, so the routine must
+The script auto-splits on these structural markers, so the routine must
 emit them exactly:
 
+- **Title line:**       `<b>📡 BASECAMP INTEL — YYYY-MM-DD</b>` (required)
 - **Section divider:**  `<b>═ SECTION NAME ═</b>` (line on its own)
 - **Numbered item:**    `<b>N. Item title</b>` at the start of a line
   (followed by the body lines)
@@ -58,7 +59,52 @@ emit them exactly:
 Inside each item / section, use Telegram-flavoured HTML directly — `<b>`,
 `<i>`, `<a href="...">`, `<code>`, `<pre>`. No markdown, no `<p>`, no `<br>`.
 Escape `&` as `&amp;` and `<` as `&lt;` in plain-text content. Keep each
-numbered item under ~3500 chars.
+numbered item under 3500 chars.
+
+The script runs `validate_report()` before sending and **aborts the workflow
+on schema drift** (missing title, unwrapped numbered items, unbalanced tags,
+oversized items). The `if: failure()` step then posts an alert to the same
+channel so you see the problem immediately, not via GitHub email.
+
+### Pinned deadline board (special section)
+
+If the report's first section is `<b>═ 📋 ACTIVE DEADLINES ═</b>`, the
+script treats it as a **single editable pinned message** rather than a
+fresh post each day:
+
+- First run: send + pin + record `message_id` in `state/pinned.json`.
+- Subsequent runs: `editMessageText` updates the same pinned message
+  in place; falls back to send+pin if the user manually unpinned/deleted
+  it.
+
+The board is the channel's "always current" snapshot of upcoming
+deadlines. Keep it short (under 1 KB) and one line per opportunity.
+
+### Hashtag taxonomy
+
+Every numbered item should end with a tag line so Telegram's built-in
+search becomes a free filter UI. Use only these tags so search stays
+consistent:
+
+| Category | Allowed tags |
+|---|---|
+| Type     | `#scholarship` `#internship` `#job` `#competition` `#fellowship` `#grant` |
+| Urgency  | `#urgent` `#open` `#planahead` |
+| Topic    | `#DSP` `#embedded` `#firmware` `#IoT` `#BLE` `#audio` `#robotics` `#ML` `#ComputerVision` |
+| Region   | `#Iran` `#Italy` `#EU` `#Germany` `#Netherlands` `#Sweden` `#Global` |
+
+Pick 3–5 tags per item. New tags are not added without updating this
+table first.
+
+## State files (machine-managed, don't hand-edit)
+
+| File | Purpose |
+|---|---|
+| `state/posted.json` | sha256 ledger of report files already posted; prevents double-posts on retries / `workflow_dispatch` replays. Use the `force` input to override. |
+| `state/pinned.json` | `message_id` of the pinned deadline board so the script can edit-in-place. |
+
+The workflow auto-commits these files at the end of a successful run with
+`[skip ci]` so it doesn't re-trigger itself.
 
 ## Secrets
 
@@ -132,38 +178,59 @@ pushes the report directly to `main` and skips its own Telegram attempt
 You are the daily intelligence scout for Ali Mansouri (GitHub: eynmim,
 MSc Embedded & Smart Systems @ PoliTO, Iranian passport, Italian PdS).
 
-Each day, write a single report file at reports/YYYY-MM-DD.md (today's
-date in CEST) covering:
-  1. PORTFOLIO SNAPSHOT — what changed in his GitHub repos, new skills
-     detected, new repos.
-  2. URGENT — opportunities with deadlines under 30 days.
-  3. OPEN OPPORTUNITIES — currently open, no rush.
+Compute today's date in Europe/Rome time and use it for everything:
+  TODAY=$(TZ=Europe/Rome date +%Y-%m-%d)
+
+Write a single report file at reports/$TODAY.md covering, in this order:
+
+  0. ACTIVE DEADLINES — a short pinned board with every opportunity that
+     still has an open deadline (whether new today or carried over from
+     prior runs). One line each, sorted by urgency. Format:
+       <b>═ 📋 ACTIVE DEADLINES ═</b>
+       ⚡ <b>15 May (8d)</b> — Educations.com Master's <a href="...">→</a>
+       ⚡ <b>30 Jun (54d)</b> — IEEE SPS Scholarship <a href="...">→</a>
+       🆕 <b>30 Aug</b> — Arduino+Qualcomm Hackathon <a href="...">→</a>
+       🔄 <b>~Mar 2027</b> — Erasmus Mundus EMINENT <a href="...">→</a>
+     Keep this section under ~1 KB. Drop expired entries. The Action
+     edits the existing pinned message in place — no fresh post each day.
+
+  1. PORTFOLIO SNAPSHOT — what changed in his GitHub repos this run,
+     new skills detected, new repos.
+  2. URGENT — opportunities with deadlines under 30 days. One numbered
+     item per opportunity.
+  3. OPEN OPPORTUNITIES — currently open, no rush. One numbered item each.
   4. PLAN AHEAD — deadlines > 60 days; flag now so he can prepare.
+     One numbered item each.
   5. THIS WEEK'S INTEL — short bullets of relevant industry/regional
-     news (Iran/Italy/EU/embedded).
+     news (Iran/Italy/EU/embedded). No numbered items.
 
 Match against: ESP32-S3, FreeRTOS, STM32, ARM Cortex-M, audio DSP/FFT,
 beamforming, MEMS mics, computer vision (YOLO), IoT/BLE, Python, React,
 embedded firmware. Eligibility: Iranian + Italian PdS.
 
 Output format (Telegram-flavoured HTML in a .md file):
-- Title:        <b>📡 BASECAMP INTEL — YYYY-MM-DD</b>
-- Section divs: <b>═ SECTION NAME ═</b>           (line on its own)
-- Numbered:     <b>N. Item title</b>              (start of a line)
+- Title:        <b>📡 BASECAMP INTEL — $TODAY</b>          (REQUIRED)
+- Section divs: <b>═ SECTION NAME ═</b>                    (line on its own)
+- Numbered:     <b>N. Item title</b>                       (start of a line)
 - Use <b>, <i>, <a href="...">, plain text. No markdown, no <p>, no <br>.
 - Escape & as &amp; and < as &lt; inside plain-text content.
 - Each numbered item must stay under 3500 chars.
+- End each numbered item with a tag line, e.g.:
+    #scholarship #urgent #DSP #EU
+  Allowed tags only — see README §Hashtag taxonomy. Pick 3–5 per item.
 
-Delivery (do NOT post to Telegram yourself; do NOT write an error.log):
+Delivery (do NOT post to Telegram yourself; do NOT write any error.log
+or auxiliary file in reports/):
 After writing the file, push directly to main — no branch, no PR:
   git checkout main
   git pull --ff-only origin main
   git add reports/
-  git commit -m "Daily intel report: $(date -u +%Y-%m-%d)"
+  git commit -m "Daily intel report: $TODAY"
   git push origin main
 
-The GitHub Action in this repo splits the file into one Telegram message
-per opportunity and delivers it. Your job ends at "git push".
+The GitHub Action in this repo validates the file, splits it into one
+Telegram message per opportunity, edits the pinned deadline board, and
+delivers everything. Your job ends at "git push".
 ```
 
 ## Layout
@@ -171,9 +238,12 @@ per opportunity and delivers it. Your job ends at "git push".
 ```
 .github/
   workflows/post-to-telegram.yml   # trigger + orchestration
-  scripts/post_to_telegram.py      # markdown -> HTML, chunking, sendMessage
+  scripts/post_to_telegram.py      # validate, split, send, pin/edit, ledger
+  scripts/notify_failure.py        # if: failure() — alert the channel
 reports/
   .gitkeep                         # keeps the directory in git
   YYYY-MM-DD.md                    # written by the Claude routine
-  YYYY-MM-DD-telegram.html         # optional pre-rendered HTML variant
+state/
+  posted.json                      # sha256 ledger; auto-committed by workflow
+  pinned.json                      # message_id of the pinned deadline board
 ```

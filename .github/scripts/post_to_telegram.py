@@ -1,15 +1,24 @@
 """Post a daily intelligence report to a Telegram channel.
 
-Reads $REPORT_FILE, splits it into one Telegram message per opportunity
-(based on section dividers and numbered items), and posts each message
-separately. Falls back to length-based chunking if any single message
-exceeds Telegram's 4096-char limit. Fails the workflow if the Bot API
-returns ok:false.
+Pipeline:
+  1. Read $REPORT_FILE (markdown or HTML).
+  2. Validate the report against the expected schema; abort if it drifts.
+  3. Skip if state/posted.json already records this exact file (sha256).
+  4. Split into one Telegram message per opportunity.
+  5. If the first message is a "═ ACTIVE DEADLINES ═" section, edit the
+     existing pinned message in place (or send + pin if no state yet).
+  6. Send the rest as new messages.
+  7. Update state/ files; the workflow commits them back to the repo.
+Failures (Telegram ok:false, schema drift, etc.) exit nonzero so the
+workflow's `if: failure()` step posts an alert to the same channel.
 """
 
 from __future__ import annotations
 
+import datetime as dt
+import hashlib
 import html
+import json
 import os
 import re
 import sys
@@ -20,6 +29,9 @@ import requests
 
 CHUNK_SIZE = 3800  # Telegram hard limit is 4096; leave headroom.
 API_BASE = "https://api.telegram.org"
+STATE_DIR = Path("state")
+POSTED_LEDGER = STATE_DIR / "posted.json"
+PINNED_STATE = STATE_DIR / "pinned.json"
 
 # Section header line, e.g. <b>═ PORTFOLIO SNAPSHOT ═</b>
 SECTION_RE = re.compile(r"(?m)^<b>═.*?═</b>\s*$")
@@ -27,6 +39,10 @@ SECTION_RE = re.compile(r"(?m)^<b>═.*?═</b>\s*$")
 ITEM_START_RE = re.compile(r"(?m)^<b>\d+\.\s")
 # Detect raw Telegram-HTML in the source so we don't double-escape it.
 HTML_TAG_RE = re.compile(r"</?(b|i|u|s|a|code|pre|blockquote)\b", re.IGNORECASE)
+# Title line, e.g. <b>📡 BASECAMP INTEL — 2026-05-08</b>
+TITLE_RE = re.compile(r"(?m)^<b>[^<]*BASECAMP INTEL[^<]*</b>\s*$")
+# Mark the deadline-board section so we know which message to pin/edit.
+DEADLINE_BOARD_RE = re.compile(r"(?m)^<b>═[^<]*ACTIVE DEADLINES[^<]*═</b>\s*$")
 
 
 def die(msg: str) -> None:
@@ -71,28 +87,48 @@ def md_to_telegram_html(md: str) -> str:
     return text
 
 
+def validate_report(text: str) -> list[str]:
+    """Return a list of problems with the report, or an empty list if valid."""
+    problems: list[str] = []
+
+    if not TITLE_RE.search(text):
+        problems.append("missing title line: expected <b>...BASECAMP INTEL...</b>")
+
+    sections = SECTION_RE.findall(text)
+    if not sections:
+        problems.append("no section dividers found (expected <b>═ ... ═</b> lines)")
+
+    # Every line that looks like a numbered item must be wrapped in <b>.
+    for line in text.splitlines():
+        if re.match(r"^\d+\.\s", line):
+            problems.append(f"numbered item missing <b>...</b> wrapper: {line[:80]!r}")
+
+    # Tag balance for the tags we use.
+    for tag in ("b", "i", "a"):
+        opens = len(re.findall(rf"<{tag}\b[^>]*>", text, re.IGNORECASE))
+        closes = len(re.findall(rf"</{tag}\b\s*>", text, re.IGNORECASE))
+        if opens != closes:
+            problems.append(f"unbalanced <{tag}> tags: {opens} open, {closes} close")
+
+    # Check item lengths after splitting.
+    if not problems:  # Only run if structure is otherwise sane.
+        for msg in split_into_messages(text):
+            if len(msg) > 3500:
+                first = msg.split("\n", 1)[0][:80]
+                problems.append(
+                    f"message exceeds 3500 chars ({len(msg)}): {first!r}"
+                )
+
+    return problems
+
+
 def split_into_messages(text: str) -> list[str]:
     """Split a Basecamp Intel report into one message per opportunity.
 
-    Layout assumed:
-      <b>📡 BASECAMP INTEL — DATE</b>      ← title (becomes message 1)
-      <b>name | role | school</b>
-      <b>═ PORTFOLIO SNAPSHOT ═</b>        ← section without items
-      ...snapshot lines...
-      <b>═ ⚡ URGENT — ... ═</b>            ← section with numbered items
-      <b>1. ...</b>
-      ...
-      <b>2. ...</b>
-      ...
-      <b>═ ... ═</b>
-      <b>3. ...</b>
-      ...
-
-    Output:
-      - Title block (everything before the first ═ section) → 1 message.
-      - Section without numbered items → 1 message (header + body).
-      - Section with numbered items → 1 message per item; the section
-        header is prepended to the first item only.
+    - Title block (lines before first ═ section) → 1 message.
+    - Section without numbered items → 1 message (header + body).
+    - Section with numbered items → 1 message per item; the section
+      header is prepended to the first item under it only.
     """
     section_headers = SECTION_RE.findall(text)
     if not section_headers:
@@ -151,36 +187,91 @@ def split_for_telegram(text: str, limit: int = CHUNK_SIZE) -> list[str]:
     return chunks
 
 
-def send_chunk(token: str, chat_id: str, text: str, *, attempt: int = 1) -> None:
-    url = f"{API_BASE}/bot{token}/sendMessage"
-    payload = {
-        "chat_id": chat_id,
-        "text": text,
-        "parse_mode": "HTML",
-        "disable_web_page_preview": True,
-    }
+def telegram_call(token: str, method: str, payload: dict, *, attempt: int = 1) -> dict:
+    url = f"{API_BASE}/bot{token}/{method}"
     resp = requests.post(url, json=payload, timeout=30)
     try:
         data = resp.json()
     except ValueError:
-        die(f"Telegram returned non-JSON (HTTP {resp.status_code}): {resp.text[:300]}")
+        die(f"Telegram {method} returned non-JSON (HTTP {resp.status_code}): {resp.text[:300]}")
 
     if resp.status_code == 429 and attempt <= 3:
         retry_after = int(data.get("parameters", {}).get("retry_after", 2))
-        print(f"Rate-limited; sleeping {retry_after}s then retrying (attempt {attempt}).")
+        print(f"Rate-limited on {method}; sleeping {retry_after}s (attempt {attempt}).")
         time.sleep(retry_after + 1)
-        send_chunk(token, chat_id, text, attempt=attempt + 1)
-        return
+        return telegram_call(token, method, payload, attempt=attempt + 1)
 
+    return data
+
+
+def send_message(token: str, chat_id: str, text: str) -> int:
+    """Send a message; return the new message_id."""
+    data = telegram_call(token, "sendMessage", {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True,
+    })
     if not data.get("ok"):
-        desc = data.get("description", "<no description>")
-        die(f"Telegram API error (HTTP {resp.status_code}): {desc}")
+        die(f"sendMessage failed: {data.get('description', '<no description>')}")
+    return data["result"]["message_id"]
+
+
+def edit_message(token: str, chat_id: str, message_id: int, text: str) -> bool:
+    """Edit an existing message. Return True on success, False if message is gone."""
+    data = telegram_call(token, "editMessageText", {
+        "chat_id": chat_id,
+        "message_id": message_id,
+        "text": text,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True,
+    })
+    if data.get("ok"):
+        return True
+    desc = (data.get("description") or "").lower()
+    # "message to edit not found" / "message can't be edited" → fall through to send+pin.
+    if "not found" in desc or "can't be edited" in desc or "message is not modified" in desc:
+        # "not modified" is fine — body is identical to last time.
+        return "not modified" in desc
+    die(f"editMessageText failed: {data.get('description', '<no description>')}")
+    return False  # unreachable
+
+
+def pin_message(token: str, chat_id: str, message_id: int) -> None:
+    data = telegram_call(token, "pinChatMessage", {
+        "chat_id": chat_id,
+        "message_id": message_id,
+        "disable_notification": True,
+    })
+    if not data.get("ok"):
+        # Pinning is best-effort; log but don't abort the run.
+        print(f"WARN: pinChatMessage failed: {data.get('description', '<no description>')}")
+
+
+def load_json(path: Path, default):
+    if not path.is_file():
+        return default
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        print(f"WARN: {path} is invalid JSON, treating as empty ({exc}).")
+        return default
+
+
+def save_json(path: Path, data) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def file_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def main() -> None:
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
     chat_id = os.environ.get("TELEGRAM_CHANNEL_ID", "").strip()
     report_file = os.environ.get("REPORT_FILE", "").strip()
+    force = os.environ.get("FORCE_REPOST", "").strip().lower() in ("1", "true", "yes")
 
     if not token:
         die("TELEGRAM_BOT_TOKEN secret is empty or missing.")
@@ -197,8 +288,18 @@ def main() -> None:
     if not raw.strip():
         die(f"Report file is empty: {report_file}")
 
-    # The routine writes Telegram-flavoured HTML directly into .md files,
-    # so detect raw HTML and skip the markdown converter when present.
+    # Idempotency: skip if this exact file has already been posted.
+    sha = file_sha256(path)
+    posted_ledger = load_json(POSTED_LEDGER, {"reports": {}})
+    posted_reports = posted_ledger.setdefault("reports", {})
+    prior = posted_reports.get(report_file)
+    if prior and prior.get("sha256") == sha and not force:
+        print(f"Report {report_file} already posted (sha256 match) — skipping.")
+        print(f"  Posted at: {prior.get('posted_at')}, messages: {prior.get('message_count')}")
+        print("  Set FORCE_REPOST=1 in workflow_dispatch to override.")
+        return
+
+    # Detect HTML so we don't re-escape what's already valid Telegram HTML.
     if HTML_TAG_RE.search(raw):
         body = raw
         fmt = "HTML (passthrough)"
@@ -209,21 +310,71 @@ def main() -> None:
         body = raw
         fmt = "raw"
 
+    # Schema validation — abort BEFORE sending if the report drifts.
+    problems = validate_report(body)
+    if problems:
+        print("::error::Report failed schema validation:")
+        for p in problems:
+            print(f"  - {p}")
+        die(f"Schema validation failed ({len(problems)} problem(s)). Aborting before send.")
+
     messages = split_into_messages(body)
     if not messages:
         die(f"After splitting, no messages to send from {report_file}.")
 
+    # The deadline board (if present) is the first message that contains
+    # the ACTIVE DEADLINES marker. It gets edited-in-place across runs
+    # rather than re-posted as a new message.
+    pin_state = load_json(PINNED_STATE, {})
+    deadline_idx = next(
+        (i for i, m in enumerate(messages) if DEADLINE_BOARD_RE.search(m)),
+        None,
+    )
+
     print(f"Posting {path} ({fmt}); {len(raw)} chars -> {len(messages)} message(s).")
+    if deadline_idx is not None:
+        print(f"  Deadline board at position {deadline_idx + 1}; will edit-or-send+pin.")
 
     sent = 0
-    for i, msg in enumerate(messages, start=1):
+    for i, msg in enumerate(messages):
+        is_deadline_board = i == deadline_idx
         chunks = split_for_telegram(msg)
-        for j, chunk in enumerate(chunks, start=1):
-            label = f"{i}/{len(messages)}" if len(chunks) == 1 else f"{i}.{j}/{len(messages)}"
+
+        for j, chunk in enumerate(chunks):
+            label = f"{i + 1}/{len(messages)}"
+            if len(chunks) > 1:
+                label += f".{j + 1}"
             print(f"  Sending {label} ({len(chunk)} chars)...")
-            send_chunk(token, chat_id, chunk)
+
+            if is_deadline_board and j == 0 and pin_state.get("message_id"):
+                # Try to update the existing pinned deadline message.
+                if edit_message(token, chat_id, pin_state["message_id"], chunk):
+                    print(f"    edited existing pinned message {pin_state['message_id']}.")
+                    pin_message(token, chat_id, pin_state["message_id"])  # re-pin if user unpinned
+                    sent += 1
+                    time.sleep(1)
+                    continue
+                # Fall through — original message is gone, send a fresh one.
+                print("    pinned message gone; sending fresh.")
+
+            mid = send_message(token, chat_id, chunk)
             sent += 1
+
+            if is_deadline_board and j == 0:
+                pin_message(token, chat_id, mid)
+                pin_state["message_id"] = mid
+                pin_state["last_updated"] = dt.datetime.now(dt.timezone.utc).isoformat()
+                save_json(PINNED_STATE, pin_state)
+
             time.sleep(1)  # Stay under per-chat rate limits.
+
+    # Update the posted-ledger after a fully successful run.
+    posted_reports[report_file] = {
+        "sha256": sha,
+        "posted_at": dt.datetime.now(dt.timezone.utc).isoformat(),
+        "message_count": sent,
+    }
+    save_json(POSTED_LEDGER, posted_ledger)
 
     print(f"OK: posted {path} to {chat_id} as {sent} message(s).")
 
