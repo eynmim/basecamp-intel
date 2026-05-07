@@ -6,17 +6,17 @@
   "categories": {
     "opportunities": {
       "label": "💼 Opportunities",
-      "topic_id": null,
+      "topic_id": 2,
       "has_deadline_board": true
     },
     "education": {
       "label": "📚 Education",
-      "topic_id": null,
+      "topic_id": 3,
       "has_deadline_board": false
     },
     "news": {
       "label": "📰 News",
-      "topic_id": null,
+      "topic_id": 4,
       "has_deadline_board": false
     }
   }
