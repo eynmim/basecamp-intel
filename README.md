@@ -1,36 +1,47 @@
 # basecamp-intel
 
-Bridge between a Claude Code routine and the **Embedded system** Telegram channel
-(bot: `@Chavosh2_Bot`).
+Bridge between scheduled Claude Code routines and a categorised Telegram
+**Basecamp Intel** supergroup (bot: `@Chavosh2_Bot`). One routine per
+category, all delivered into the right Topic of the same supergroup.
 
 ## What this repo does
 
-A scheduled Claude Code routine writes a daily intelligence report (news +
-opportunities) into this repo. A GitHub Action picks up the new file and posts
-it to Telegram. There is no server to run — GitHub Actions is the entire
-delivery pipeline.
+Multiple scheduled Claude Code routines (Opportunities, Education, News, …)
+write daily intelligence reports into this repo, each under its own
+`reports/<category>/` folder. A GitHub Action picks up the new file,
+validates it, and posts to the matching **Topic** in the supergroup
+(routed via `.github/topics.json`). One pipeline, one bot, multiple
+topics — no server.
 
 ## Architecture
 
 ```
-Claude routine (08:10 CEST)
-        │  writes file
-        ▼
-reports/YYYY-MM-DD.md
-reports/YYYY-MM-DD-telegram.html
-        │  git push to main
-        ▼
-.github/workflows/post-to-telegram.yml
-        │  runs post_to_telegram.py
-        ▼
-Telegram Bot API → channel "Embedded system"
+Routine A (Opportunities, daily)        Routine B (Education, weekly)        Routine C (News, daily)
+       │  writes                                │  writes                            │  writes
+       ▼                                        ▼                                    ▼
+reports/opportunities/YYYY-MM-DD.md     reports/education/YYYY-MM-DD.md      reports/news/YYYY-MM-DD.md
+       │ git push to main                       │ git push to main                   │ git push to main
+       ▼                                        ▼                                    ▼
+                  .github/workflows/post-to-telegram.yml  ←  triggered on push to reports/**
+                                  │  reads .github/topics.json to map <category> → topic_id
+                                  ▼
+                  .github/scripts/post_to_telegram.py
+                                  │  validates → splits → sendMessage(message_thread_id=topic_id)
+                                  ▼
+                  Telegram supergroup "Basecamp Intel"
+                          ┌──────────┬─────────────┬─────────┐
+                          │ 💼 Opp.  │ 📚 Education │ 📰 News │
+                          └──────────┴─────────────┴─────────┘
 ```
 
 Pipeline details:
 
-- The routine commits to `main` under `reports/`. It can write either the
-  `.md` source or a pre-rendered `.html`. If both land in the same push, the
-  `.html` is preferred (assumed to be the cleaner version).
+- Each routine commits to `main` under `reports/<category>/`. Category is
+  derived from the file path:
+  `reports/opportunities/YYYY-MM-DD.md` → category `opportunities` →
+  posted to the Opportunities topic.
+  Files at `reports/YYYY-MM-DD.md` (no subfolder) fall back to
+  `default_category` from `.github/topics.json` for backwards compat.
 - The workflow triggers on `push` when paths under `reports/` change, or
   manually via `workflow_dispatch`.
 - The Python script (`.github/scripts/post_to_telegram.py`) reads the file
@@ -168,11 +179,49 @@ The bot must be added to the channel as an **administrator** with permission
 to post messages, otherwise `sendMessage` returns
 `ok: false, description: "Bad Request: chat not found"` or similar.
 
-## Routine prompt (drop-in)
+## Migration: from a single channel to a categorised supergroup
 
-Paste this as the body of the **Oppurtunities** routine in claude.ai so it
-pushes the report directly to `main` and skips its own Telegram attempt
-(the GitHub Action handles delivery):
+If you've already done the migration, skip to **Routine prompts**. Otherwise,
+do this once:
+
+1. **Create a Telegram supergroup** named *Basecamp Intel*. In group
+   settings, toggle **Topics ON** so it becomes a forum.
+2. **Create three topics** inside it: *Opportunities* (💼), *Education* (📚),
+   *News* (📰).
+3. **Add `@Chavosh2_Bot` as an admin** with rights to *send messages*,
+   *pin messages*, and *manage topics*.
+4. **Get the supergroup chat_id and per-topic message_thread_id**. Easiest
+   way: send any message inside each topic, forward each one to
+   `@RawDataBot`, and read `chat.id` (same for all forwards) and
+   `message_thread_id` (different per topic). Supergroup chat_ids are of
+   the form `-1002xxxxxxxxxx`.
+5. **Update `TELEGRAM_CHANNEL_ID`** in repo Settings → Secrets to the new
+   supergroup's chat_id. The bot token stays the same.
+6. **Fill in `.github/topics.json`** — replace each `"topic_id": null`
+   with the actual integer for that topic. Commit and push.
+
+Until step 6, `topic_id` stays `null` and the script posts without a
+thread (so existing channel delivery keeps working). The migration is
+fully reversible: blank out `topic_id`s and point `TELEGRAM_CHANNEL_ID`
+at the old channel.
+
+## Adding a new category later
+
+1. Add it to `.github/topics.json` (`label`, `topic_id`, `has_deadline_board`).
+2. Create the matching topic in the supergroup; grab its `message_thread_id`
+   via @RawDataBot; paste it into the JSON.
+3. Set up a routine in claude.ai that writes `reports/<new-cat>/$TODAY.md`.
+   Use the relevant prompt below as a template.
+
+## Routine prompts (drop-in)
+
+There's one routine per category. All of them push to `main` directly,
+let the Action handle Telegram, and use the same HTML output format —
+they differ only in *what* they research and *where* they save the file.
+
+### Opportunities routine — `reports/opportunities/$TODAY.md`
+
+Paste this into the **Oppurtunities** routine in claude.ai:
 
 ```
 You are the daily intelligence scout for Ali Mansouri (GitHub: eynmim,
@@ -181,7 +230,8 @@ MSc Embedded & Smart Systems @ PoliTO, Iranian passport, Italian PdS).
 Compute today's date in Europe/Rome time and use it for everything:
   TODAY=$(TZ=Europe/Rome date +%Y-%m-%d)
 
-Write a single report file at reports/$TODAY.md covering, in this order:
+Write a single report file at reports/opportunities/$TODAY.md covering,
+in this order:
 
   0. ACTIVE DEADLINES — a short pinned board with every opportunity that
      still has an open deadline (whether new today or carried over from
@@ -224,26 +274,208 @@ or auxiliary file in reports/):
 After writing the file, push directly to main — no branch, no PR:
   git checkout main
   git pull --ff-only origin main
-  git add reports/
-  git commit -m "Daily intel report: $TODAY"
+  git add reports/opportunities/
+  git commit -m "Daily opportunities: $TODAY"
   git push origin main
 
-The GitHub Action in this repo validates the file, splits it into one
-Telegram message per opportunity, edits the pinned deadline board, and
-delivers everything. Your job ends at "git push".
+The GitHub Action validates the file, splits it into one Telegram
+message per opportunity, edits the pinned deadline board, and delivers
+everything to the Opportunities topic. Your job ends at "git push".
+```
+
+### Education routine — `reports/education/$TODAY.md`
+
+Set this up as a separate routine in claude.ai (e.g. weekly). Use the
+prompt below:
+
+```
+You are the weekly Embedded Engineering education scout for Ali Mansouri
+(MSc Embedded & Smart Systems @ PoliTO, eynmim on GitHub). Surface
+high-quality educational content that pushes his current skill stack
+forward — depth over breadth, no fluff, no clickbait.
+
+Compute today's date in Europe/Rome:
+  TODAY=$(TZ=Europe/Rome date +%Y-%m-%d)
+
+Write a single report file at reports/education/$TODAY.md.
+
+Curate (last 14 days unless evergreen):
+  - New free courses, university lecture series, MOOCs (Coursera/edX/MIT
+    OCW) on RTOS, embedded C, BLE, DSP/audio, Edge AI, formal verification,
+    PCB/KiCad, Linux for embedded, RISC-V, signal integrity.
+  - Open-source projects worth studying as code: representative repos,
+    not toy demos. Include why the code is instructive (architecture,
+    HAL design, RTOS pattern, DSP technique).
+  - Datasheets / app notes worth deep-reading (Nordic, ST, Espressif,
+    NXP, ARM whitepapers).
+  - Books / book chapters with free legal sample chapters (e.g. Yiu's
+    Cortex-M definitive guide releases, MISRA samples).
+  - Conference talks (Embedded World, FOSDEM Embedded, ELC, ESC) with
+    YouTube links.
+
+DO NOT include: paid bootcamps, scholarship listings, jobs, news.
+Those belong in the Opportunities and News routines.
+
+Output format (Telegram-flavoured HTML in a .md file). Do NOT include
+an ACTIVE DEADLINES section — Education has no deadline board.
+
+  <b>📚 EMBEDDED EDUCATION — $TODAY</b>
+  <b>Curated for Ali Mansouri | PoliTO MSc</b>
+
+  <b>═ 🎯 THIS WEEK'S DEEP DIVE ═</b>
+  One feature item: longer write-up on the most valuable resource of
+  the week. Why it matters, what to read first, ~10 lines.
+
+  <b>═ 📖 COURSES & SERIES ═</b>
+
+  <b>1. Course/series title</b>
+  Source: provider | Format: video / text / interactive
+  Length: ~Nh | Cost: free / $X
+  Why it matters: 1–2 lines tying to Ali's stack
+  <a href="https://...">Open →</a>
+  #education #FreeRTOS #embedded
+
+  <b>2. ...</b>
+
+  <b>═ 💻 CODE WORTH READING ═</b>
+
+  <b>3. Repo or project name</b>
+  Stars: N | Lang: C | License: MIT
+  What's instructive: 1–2 lines (architecture, RTOS pattern, etc.)
+  <a href="https://github.com/...">Repo →</a>
+  #education #embedded #firmware
+
+  <b>═ 📑 APP NOTES & WHITEPAPERS ═</b>
+
+  <b>4. Document title</b>
+  Vendor | doc number / version | Pages: N
+  Key idea: 1–2 lines
+  <a href="https://...">PDF →</a>
+  #education #BLE #embedded
+
+  <b>═ 🎤 TALKS WORTH 40 MIN ═</b>
+
+  <b>5. Talk title</b>
+  Speaker | venue | year | Length: Nm
+  Tag-line: one sentence
+  <a href="https://youtube.com/...">Watch →</a>
+  #education #embedded
+
+  <b>═ 📌 TL;DR ═</b>
+  • One-line per item, in priority order.
+
+FORMATTING RULES (validator aborts on any of these):
+- Title line REQUIRED; must contain "EMBEDDED EDUCATION".
+- Section dividers: <b>═ NAME ═</b> (own line)
+- Numbered items:   <b>N. Title</b> (start of line)
+- Each numbered item ends with a tag line. Allowed tags only —
+  see README §Hashtag taxonomy. Pick 3–5 per item.
+- Each item under 3500 chars.
+
+Delivery (do NOT call api.telegram.org):
+  git checkout main
+  git pull --ff-only origin main
+  git add reports/education/
+  git commit -m "Weekly education: $TODAY"
+  git push origin main
+```
+
+### News routine — `reports/news/$TODAY.md`
+
+Set this up as a separate routine in claude.ai (e.g. daily, evening
+slot to avoid colliding with the morning Opportunities run):
+
+```
+You are the daily news scout for Ali Mansouri's embedded engineering
+career and Iran/Italy/EU regulatory environment. Surface what *changed*
+in the last 24h — be specific, link primary sources, no editorialising.
+
+Compute today's date in Europe/Rome:
+  TODAY=$(TZ=Europe/Rome date +%Y-%m-%d)
+
+Write a single report file at reports/news/$TODAY.md.
+
+Cover (last 24–48 hours):
+  - Embedded silicon: chip releases, dev-kit launches, EOL notices
+    (Espressif / Nordic / ST / NXP / Renesas / TI / Microchip).
+  - Open-source toolchain news: PlatformIO, ESP-IDF, Zephyr RTOS,
+    FreeRTOS, KiCad, Renode, QEMU.
+  - EU/Iran/Italy policy: visa changes affecting Iranian nationals;
+    Italian permesso/lavoro reforms; EU Blue Card thresholds; Iran
+    sanctions changes that affect academic / industrial mobility.
+  - Standards: BLE / Wi-Fi / Matter / USB / IEC 61508 / cybersecurity
+    (CRA, RED) — when something is *finalised* or *enforced*, not
+    rumoured.
+
+DO NOT include: scholarship listings, course recommendations, generic
+industry editorials, hype articles.
+
+Output format (Telegram-flavoured HTML in a .md file). Do NOT include
+an ACTIVE DEADLINES section — News has no deadline board.
+
+  <b>📰 EMBEDDED & MOBILITY NEWS — $TODAY</b>
+  <b>For Ali Mansouri | Iran→Italy→EU embedded track</b>
+
+  <b>═ 🔥 TOP STORY ═</b>
+  Most consequential item of the day. 4–6 sentences max. Direct
+  source link. Why it matters to Ali in one final sentence.
+
+  <b>═ 🛠️ EMBEDDED & TOOLCHAIN ═</b>
+
+  <b>1. Headline</b>
+  Source: vendor / publication | Date: YYYY-MM-DD
+  What changed: 2–3 sentences.
+  <a href="https://...">Source →</a>
+  #news #embedded #firmware
+
+  <b>2. ...</b>
+
+  <b>═ 🌍 IRAN / ITALY / EU MOBILITY ═</b>
+
+  <b>3. Headline</b>
+  Source: government portal / reputable outlet | Date: YYYY-MM-DD
+  What changed: 2–3 sentences.
+  Affects Ali if: 1 sentence.
+  <a href="https://...">Source →</a>
+  #news #Iran #Italy #EU
+
+  <b>═ 📐 STANDARDS & REGULATION ═</b>
+
+  <b>4. ...</b>
+
+  <b>═ 📌 ALSO TODAY ═</b>
+  • One-liner + link.
+  • One-liner + link.
+
+FORMATTING RULES (validator aborts on any of these):
+- Title line REQUIRED; must contain "EMBEDDED" and "NEWS".
+- Section dividers: <b>═ NAME ═</b> (own line)
+- Numbered items:   <b>N. Title</b> (start of line)
+- Each numbered item ends with a tag line. Allowed tags only.
+- Each item under 3500 chars.
+
+Delivery (do NOT call api.telegram.org):
+  git checkout main
+  git pull --ff-only origin main
+  git add reports/news/
+  git commit -m "Daily news: $TODAY"
+  git push origin main
 ```
 
 ## Layout
 
 ```
 .github/
-  workflows/post-to-telegram.yml   # trigger + orchestration
-  scripts/post_to_telegram.py      # validate, split, send, pin/edit, ledger
-  scripts/notify_failure.py        # if: failure() — alert the channel
+  topics.json                            # category → topic_id mapping
+  workflows/post-to-telegram.yml         # trigger + orchestration
+  scripts/post_to_telegram.py            # validate, split, route, send, pin
+  scripts/notify_failure.py              # if: failure() — alert the channel
 reports/
-  .gitkeep                         # keeps the directory in git
-  YYYY-MM-DD.md                    # written by the Claude routine
+  .gitkeep
+  opportunities/YYYY-MM-DD.md            # Opportunities routine output
+  education/YYYY-MM-DD.md                # Education routine output
+  news/YYYY-MM-DD.md                     # News routine output
 state/
-  posted.json                      # sha256 ledger; auto-committed by workflow
-  pinned.json                      # message_id of the pinned deadline board
+  posted.json                            # sha256 ledger (per file path)
+  pinned.json                            # per-category map of pinned message_ids
 ```

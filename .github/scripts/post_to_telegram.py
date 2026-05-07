@@ -32,6 +32,7 @@ API_BASE = "https://api.telegram.org"
 STATE_DIR = Path("state")
 POSTED_LEDGER = STATE_DIR / "posted.json"
 PINNED_STATE = STATE_DIR / "pinned.json"
+TOPICS_CONFIG = Path(".github/topics.json")
 
 # Section header line, e.g. <b>═ PORTFOLIO SNAPSHOT ═</b>
 SECTION_RE = re.compile(r"(?m)^<b>═.*?═</b>\s*$")
@@ -39,8 +40,9 @@ SECTION_RE = re.compile(r"(?m)^<b>═.*?═</b>\s*$")
 ITEM_START_RE = re.compile(r"(?m)^<b>\d+\.\s")
 # Detect raw Telegram-HTML in the source so we don't double-escape it.
 HTML_TAG_RE = re.compile(r"</?(b|i|u|s|a|code|pre|blockquote)\b", re.IGNORECASE)
-# Title line, e.g. <b>📡 BASECAMP INTEL — 2026-05-08</b>
-TITLE_RE = re.compile(r"(?m)^<b>[^<]*BASECAMP INTEL[^<]*</b>\s*$")
+# A title line is any <b>...</b> line at the top of the report (before
+# the first section divider). Any category-specific title text is fine.
+TITLE_RE = re.compile(r"(?m)^<b>[^<\n]+</b>\s*$")
 # Mark the deadline-board section so we know which message to pin/edit.
 DEADLINE_BOARD_RE = re.compile(r"(?m)^<b>═[^<]*ACTIVE DEADLINES[^<]*═</b>\s*$")
 
@@ -91,12 +93,19 @@ def validate_report(text: str) -> list[str]:
     """Return a list of problems with the report, or an empty list if valid."""
     problems: list[str] = []
 
-    if not TITLE_RE.search(text):
-        problems.append("missing title line: expected <b>...BASECAMP INTEL...</b>")
-
     sections = SECTION_RE.findall(text)
     if not sections:
         problems.append("no section dividers found (expected <b>═ ... ═</b> lines)")
+
+    # A title block must exist before the first section divider, and contain
+    # at least one <b>...</b> line. We don't care which keywords it uses —
+    # different categories have different titles.
+    first_section = SECTION_RE.search(text)
+    preamble = text[: first_section.start()].strip() if first_section else text.strip()
+    if not preamble:
+        problems.append("missing title block before first section divider")
+    elif not TITLE_RE.search(preamble):
+        problems.append("title block has no <b>...</b> line; first non-blank line should be a bolded title")
 
     # Every line that looks like a numbered item must be wrapped in <b>.
     for line in text.splitlines():
@@ -204,21 +213,24 @@ def telegram_call(token: str, method: str, payload: dict, *, attempt: int = 1) -
     return data
 
 
-def send_message(token: str, chat_id: str, text: str) -> int:
-    """Send a message; return the new message_id."""
-    data = telegram_call(token, "sendMessage", {
+def send_message(token: str, chat_id: str, text: str, thread_id: int | None = None) -> int:
+    """Send a message to a chat (or a topic if thread_id is set); return new message_id."""
+    payload = {
         "chat_id": chat_id,
         "text": text,
         "parse_mode": "HTML",
         "disable_web_page_preview": True,
-    })
+    }
+    if thread_id is not None:
+        payload["message_thread_id"] = thread_id
+    data = telegram_call(token, "sendMessage", payload)
     if not data.get("ok"):
         die(f"sendMessage failed: {data.get('description', '<no description>')}")
     return data["result"]["message_id"]
 
 
 def edit_message(token: str, chat_id: str, message_id: int, text: str) -> bool:
-    """Edit an existing message. Return True on success, False if message is gone."""
+    """Edit an existing message. Return True on success, False if it can't be edited."""
     data = telegram_call(token, "editMessageText", {
         "chat_id": chat_id,
         "message_id": message_id,
@@ -229,10 +241,12 @@ def edit_message(token: str, chat_id: str, message_id: int, text: str) -> bool:
     if data.get("ok"):
         return True
     desc = (data.get("description") or "").lower()
-    # "message to edit not found" / "message can't be edited" → fall through to send+pin.
-    if "not found" in desc or "can't be edited" in desc or "message is not modified" in desc:
-        # "not modified" is fine — body is identical to last time.
-        return "not modified" in desc
+    # "message to edit not found" / "message can't be edited" → caller falls through to send+pin.
+    # "message is not modified" → body is identical to last time, treat as success.
+    if "not modified" in desc:
+        return True
+    if "not found" in desc or "can't be edited" in desc:
+        return False
     die(f"editMessageText failed: {data.get('description', '<no description>')}")
     return False  # unreachable
 
@@ -246,6 +260,31 @@ def pin_message(token: str, chat_id: str, message_id: int) -> None:
     if not data.get("ok"):
         # Pinning is best-effort; log but don't abort the run.
         print(f"WARN: pinChatMessage failed: {data.get('description', '<no description>')}")
+
+
+def load_topic_config(category_hint: str) -> tuple[str, int | None, bool, str]:
+    """Resolve (category, topic_id, has_deadline_board, label) for the run.
+
+    The workflow passes the category extracted from the file path (or empty
+    string for legacy root-level reports). We fall back to default_category
+    if the hint is empty or unknown.
+    """
+    config = load_json(TOPICS_CONFIG, {})
+    cats = config.get("categories", {}) or {}
+    default_cat = config.get("default_category", "opportunities")
+
+    category = category_hint or default_cat
+    if category not in cats:
+        if category_hint:
+            print(f"WARN: category '{category_hint}' not in topics.json; "
+                  f"falling back to default '{default_cat}'.")
+        category = default_cat
+
+    cat_cfg = cats.get(category, {}) or {}
+    topic_id = cat_cfg.get("topic_id")
+    has_board = bool(cat_cfg.get("has_deadline_board", False))
+    label = cat_cfg.get("label", category)
+    return category, topic_id, has_board, label
 
 
 def load_json(path: Path, default):
@@ -271,6 +310,7 @@ def main() -> None:
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
     chat_id = os.environ.get("TELEGRAM_CHANNEL_ID", "").strip()
     report_file = os.environ.get("REPORT_FILE", "").strip()
+    category_hint = os.environ.get("REPORT_CATEGORY", "").strip()
     force = os.environ.get("FORCE_REPOST", "").strip().lower() in ("1", "true", "yes")
 
     if not token:
@@ -287,6 +327,11 @@ def main() -> None:
     raw = path.read_text(encoding="utf-8")
     if not raw.strip():
         die(f"Report file is empty: {report_file}")
+
+    # Resolve category → topic_id from .github/topics.json. If topic_id is
+    # null (or topics.json missing), thread_id stays None and the script
+    # posts without a thread (works for plain channels).
+    category, thread_id, has_board, label = load_topic_config(category_hint)
 
     # Idempotency: skip if this exact file has already been posted.
     sha = file_sha256(path)
@@ -322,18 +367,25 @@ def main() -> None:
     if not messages:
         die(f"After splitting, no messages to send from {report_file}.")
 
-    # The deadline board (if present) is the first message that contains
-    # the ACTIVE DEADLINES marker. It gets edited-in-place across runs
-    # rather than re-posted as a new message.
-    pin_state = load_json(PINNED_STATE, {})
-    deadline_idx = next(
-        (i for i, m in enumerate(messages) if DEADLINE_BOARD_RE.search(m)),
-        None,
-    )
+    # Pinned-state is keyed by category so each topic has its own deadline
+    # board state. Schema: {"<category>": {"message_id": ..., "last_updated": ...}}.
+    pin_state_all = load_json(PINNED_STATE, {})
+    pin_state = pin_state_all.get(category, {}) if isinstance(pin_state_all, dict) else {}
+
+    deadline_idx: int | None = None
+    if has_board:
+        deadline_idx = next(
+            (i for i, m in enumerate(messages) if DEADLINE_BOARD_RE.search(m)),
+            None,
+        )
 
     print(f"Posting {path} ({fmt}); {len(raw)} chars -> {len(messages)} message(s).")
+    print(f"  Category: {category} ({label}); "
+          f"thread_id={thread_id if thread_id is not None else '(none, posting to chat root)'}")
     if deadline_idx is not None:
         print(f"  Deadline board at position {deadline_idx + 1}; will edit-or-send+pin.")
+    elif has_board:
+        print("  Category supports a deadline board, but the report doesn't include one.")
 
     sent = 0
     for i, msg in enumerate(messages):
@@ -341,42 +393,45 @@ def main() -> None:
         chunks = split_for_telegram(msg)
 
         for j, chunk in enumerate(chunks):
-            label = f"{i + 1}/{len(messages)}"
+            tag = f"{i + 1}/{len(messages)}"
             if len(chunks) > 1:
-                label += f".{j + 1}"
-            print(f"  Sending {label} ({len(chunk)} chars)...")
+                tag += f".{j + 1}"
+            print(f"  Sending {tag} ({len(chunk)} chars)...")
 
             if is_deadline_board and j == 0 and pin_state.get("message_id"):
-                # Try to update the existing pinned deadline message.
+                # Try to update the existing pinned deadline message in this topic.
                 if edit_message(token, chat_id, pin_state["message_id"], chunk):
                     print(f"    edited existing pinned message {pin_state['message_id']}.")
                     pin_message(token, chat_id, pin_state["message_id"])  # re-pin if user unpinned
                     sent += 1
                     time.sleep(1)
                     continue
-                # Fall through — original message is gone, send a fresh one.
                 print("    pinned message gone; sending fresh.")
 
-            mid = send_message(token, chat_id, chunk)
+            mid = send_message(token, chat_id, chunk, thread_id=thread_id)
             sent += 1
 
             if is_deadline_board and j == 0:
                 pin_message(token, chat_id, mid)
                 pin_state["message_id"] = mid
                 pin_state["last_updated"] = dt.datetime.now(dt.timezone.utc).isoformat()
-                save_json(PINNED_STATE, pin_state)
+                if not isinstance(pin_state_all, dict):
+                    pin_state_all = {}
+                pin_state_all[category] = pin_state
+                save_json(PINNED_STATE, pin_state_all)
 
             time.sleep(1)  # Stay under per-chat rate limits.
 
     # Update the posted-ledger after a fully successful run.
     posted_reports[report_file] = {
         "sha256": sha,
+        "category": category,
         "posted_at": dt.datetime.now(dt.timezone.utc).isoformat(),
         "message_count": sent,
     }
     save_json(POSTED_LEDGER, posted_ledger)
 
-    print(f"OK: posted {path} to {chat_id} as {sent} message(s).")
+    print(f"OK: posted {path} to {chat_id} (category={category}) as {sent} message(s).")
 
 
 if __name__ == "__main__":

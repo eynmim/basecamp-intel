@@ -42,7 +42,7 @@ jobs:
       - name: Install dependencies
         run: pip install requests==2.32.3
 
-      - name: Determine report file
+      - name: Determine report file + category
         id: pick
         env:
           DISPATCH_FILE: ${{ github.event.inputs.file }}
@@ -69,7 +69,7 @@ jobs:
             elif [ -n "$md_pick" ]; then
               target="$md_pick"
             else
-              target=$(ls -t reports/*.html reports/*.md 2>/dev/null | head -n 1 || true)
+              target=$(ls -t reports/**/*.{html,md} reports/*.{html,md} 2>/dev/null | head -n 1 || true)
             fi
           fi
 
@@ -78,14 +78,26 @@ jobs:
             exit 1
           fi
 
+          # Category routing: reports/<category>/YYYY-MM-DD.{md,html} -> <category>
+          # reports/YYYY-MM-DD.{md,html} (legacy root layout) -> default category
+          rel="${target#reports/}"
+          if [[ "$rel" == */* ]]; then
+            category="${rel%%/*}"
+          else
+            category=""  # script falls back to default_category from topics.json
+          fi
+
           echo "file=$target" >> "$GITHUB_OUTPUT"
+          echo "category=$category" >> "$GITHUB_OUTPUT"
           echo "Selected file: $target"
+          echo "Category:      ${category:-(default)}"
 
       - name: Post to Telegram
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
           REPORT_FILE: ${{ steps.pick.outputs.file }}
+          REPORT_CATEGORY: ${{ steps.pick.outputs.category }}
           FORCE_REPOST: ${{ github.event.inputs.force || 'false' }}
         run: python .github/scripts/post_to_telegram.py
 
