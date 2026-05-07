@@ -33,12 +33,32 @@ Pipeline details:
   `.html` is preferred (assumed to be the cleaner version).
 - The workflow triggers on `push` when paths under `reports/` change, or
   manually via `workflow_dispatch`.
-- The Python script (`.github/scripts/post_to_telegram.py`) reads the file,
-  converts markdown -> Telegram-flavoured HTML if needed, splits to
-  3800-char chunks (Telegram's hard limit is 4096), and posts each chunk via
-  `sendMessage` with `parse_mode=HTML`.
-- If Telegram returns `ok: false` for any chunk, the workflow fails with the
-  API's error description so the failure is visible in the Actions log.
+- The Python script (`.github/scripts/post_to_telegram.py`) reads the file
+  and **splits it into one Telegram message per opportunity**, so the channel
+  reads like a daily news feed:
+  - Title block (everything before the first `<b>═ ... ═</b>` divider) =
+    message 1.
+  - Each `<b>═ SECTION ═</b>` section without numbered items = one message.
+  - Each `<b>N. Title</b>` numbered item = one message; the section header
+    is prepended to the first item under it only.
+- If a single message somehow exceeds 3800 chars, it falls back to length-
+  based chunking. (Telegram's hard limit is 4096.)
+- If Telegram returns `ok: false` for any chunk, the workflow fails with
+  the API's error description so the failure is visible in the Actions log.
+
+## Report format the routine must produce
+
+The script auto-splits on these two structural markers, so the routine must
+emit them exactly:
+
+- **Section divider:**  `<b>═ SECTION NAME ═</b>` (line on its own)
+- **Numbered item:**    `<b>N. Item title</b>` at the start of a line
+  (followed by the body lines)
+
+Inside each item / section, use Telegram-flavoured HTML directly — `<b>`,
+`<i>`, `<a href="...">`, `<code>`, `<pre>`. No markdown, no `<p>`, no `<br>`.
+Escape `&` as `&amp;` and `<` as `&lt;` in plain-text content. Keep each
+numbered item under ~3500 chars.
 
 ## Secrets
 
@@ -101,6 +121,50 @@ gh run watch
 The bot must be added to the channel as an **administrator** with permission
 to post messages, otherwise `sendMessage` returns
 `ok: false, description: "Bad Request: chat not found"` or similar.
+
+## Routine prompt (drop-in)
+
+Paste this as the body of the **Oppurtunities** routine in claude.ai so it
+pushes the report directly to `main` and skips its own Telegram attempt
+(the GitHub Action handles delivery):
+
+```
+You are the daily intelligence scout for Ali Mansouri (GitHub: eynmim,
+MSc Embedded & Smart Systems @ PoliTO, Iranian passport, Italian PdS).
+
+Each day, write a single report file at reports/YYYY-MM-DD.md (today's
+date in CEST) covering:
+  1. PORTFOLIO SNAPSHOT — what changed in his GitHub repos, new skills
+     detected, new repos.
+  2. URGENT — opportunities with deadlines under 30 days.
+  3. OPEN OPPORTUNITIES — currently open, no rush.
+  4. PLAN AHEAD — deadlines > 60 days; flag now so he can prepare.
+  5. THIS WEEK'S INTEL — short bullets of relevant industry/regional
+     news (Iran/Italy/EU/embedded).
+
+Match against: ESP32-S3, FreeRTOS, STM32, ARM Cortex-M, audio DSP/FFT,
+beamforming, MEMS mics, computer vision (YOLO), IoT/BLE, Python, React,
+embedded firmware. Eligibility: Iranian + Italian PdS.
+
+Output format (Telegram-flavoured HTML in a .md file):
+- Title:        <b>📡 BASECAMP INTEL — YYYY-MM-DD</b>
+- Section divs: <b>═ SECTION NAME ═</b>           (line on its own)
+- Numbered:     <b>N. Item title</b>              (start of a line)
+- Use <b>, <i>, <a href="...">, plain text. No markdown, no <p>, no <br>.
+- Escape & as &amp; and < as &lt; inside plain-text content.
+- Each numbered item must stay under 3500 chars.
+
+Delivery (do NOT post to Telegram yourself; do NOT write an error.log):
+After writing the file, push directly to main — no branch, no PR:
+  git checkout main
+  git pull --ff-only origin main
+  git add reports/
+  git commit -m "Daily intel report: $(date -u +%Y-%m-%d)"
+  git push origin main
+
+The GitHub Action in this repo splits the file into one Telegram message
+per opportunity and delivers it. Your job ends at "git push".
+```
 
 ## Layout
 
