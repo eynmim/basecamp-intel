@@ -1,0 +1,81 @@
+name: Post report to Telegram
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'reports/**'
+  workflow_dispatch:
+    inputs:
+      file:
+        description: 'Path to the report file to post (e.g. reports/2026-05-07.md). Leave blank to use the newest file in reports/.'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests==2.32.3
+
+      - name: Determine report file
+        id: pick
+        env:
+          DISPATCH_FILE: ${{ github.event.inputs.file }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          target=""
+
+          if [ -n "${DISPATCH_FILE:-}" ]; then
+            target="$DISPATCH_FILE"
+            echo "Using workflow_dispatch input: $target"
+          else
+            # Prefer files added/modified in the push (HTML > MD)
+            mapfile -t changed < <(git diff --name-only --diff-filter=AM "${{ github.event.before }}" "${{ github.sha }}" -- 'reports/' 2>/dev/null || true)
+            html_pick=""
+            md_pick=""
+            for f in "${changed[@]}"; do
+              case "$f" in
+                reports/*.html) html_pick="$f" ;;
+                reports/*.md)   md_pick="$f" ;;
+              esac
+            done
+            if [ -n "$html_pick" ]; then
+              target="$html_pick"
+            elif [ -n "$md_pick" ]; then
+              target="$md_pick"
+            else
+              # Fallback: newest file in reports/ on disk
+              target=$(ls -t reports/*.html reports/*.md 2>/dev/null | head -n 1 || true)
+            fi
+          fi
+
+          if [ -z "$target" ] || [ ! -f "$target" ]; then
+            echo "::error::No report file found to post (looked at push diff, then reports/*.html|*.md)."
+            exit 1
+          fi
+
+          echo "file=$target" >> "$GITHUB_OUTPUT"
+          echo "Selected file: $target"
+
+      - name: Post to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+          REPORT_FILE: ${{ steps.pick.outputs.file }}
+        run: python .github/scripts/post_to_telegram.py
