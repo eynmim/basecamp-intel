@@ -369,8 +369,17 @@ def main() -> None:
 
     # Pinned-state is keyed by category so each topic has its own deadline
     # board state. Schema: {"<category>": {"message_id": ..., "last_updated": ...}}.
+    # Older single-category runs wrote a flat {"message_id": ...} dict; if we
+    # see that, migrate it under default_category so the existing pinned
+    # message keeps getting edited in place.
     pin_state_all = load_json(PINNED_STATE, {})
-    pin_state = pin_state_all.get(category, {}) if isinstance(pin_state_all, dict) else {}
+    if not isinstance(pin_state_all, dict):
+        pin_state_all = {}
+    if "message_id" in pin_state_all:
+        default_cat = load_json(TOPICS_CONFIG, {}).get("default_category", "opportunities")
+        print(f"  Migrating flat pinned.json schema -> per-category (under '{default_cat}').")
+        pin_state_all = {default_cat: pin_state_all}
+    pin_state = pin_state_all.get(category, {})
 
     deadline_idx: int | None = None
     if has_board:
