@@ -65,23 +65,63 @@ def main() -> None:
           f"(id={me.get('id')}, name={me.get('first_name')!r}).")
     bot_id = me["id"]
 
-    # ---- 2. getChat: can the bot reach the chat? -------------------------
-    print("\n[2/3] getChat — can the bot see this chat?")
-    r = call(token, "getChat", {"chat_id": chat_id})
-    if not r.get("ok"):
-        desc = r.get("description", "<no description>")
-        print(f"  ❌ getChat failed: {desc}")
+    # ---- 2a. Compare the secret against the expected value char-by-char.
+    expected = "-1003957539319"
+    print(f"\n[2a/3] Char-by-char check vs expected {expected!r} (len={len(expected)})")
+    print(f"  is_ascii(secret): {chat_id.isascii()}")
+    if len(chat_id) != len(expected):
+        print(f"  ❌ Length mismatch: secret has {len(chat_id)}, expected {len(expected)}.")
+    else:
+        diffs = [(i, c, e) for i, (c, e) in enumerate(zip(chat_id, expected)) if c != e]
+        if not diffs:
+            print(f"  ✅ Secret matches expected value byte-for-byte.")
+        else:
+            print(f"  ❌ {len(diffs)} character(s) differ from expected:")
+            for i, c, e in diffs:
+                print(
+                    f"     pos {i}: secret has U+{ord(c):04X} ({c!r}), "
+                    f"expected U+{ord(e):04X} ({e!r})"
+                )
+            print(
+                "  → Some character in the secret is not what it appears to be "
+                "(e.g. typographic minus '−' U+2212 vs hyphen-minus '-' U+002D)."
+            )
+
+    # ---- 2b. getChat with the secret value --------------------------------
+    print("\n[2b/3] getChat with chat_id from secret")
+    r_secret = call(token, "getChat", {"chat_id": chat_id})
+    print(f"  secret -> ok={r_secret.get('ok')}, "
+          f"description={r_secret.get('description')!r}")
+
+    # ---- 2c. getChat with the hardcoded expected value -------------------
+    print(f"\n[2c/3] getChat with HARDCODED chat_id {expected!r}")
+    r_hard = call(token, "getChat", {"chat_id": expected})
+    print(f"  hardcoded -> ok={r_hard.get('ok')}, "
+          f"description={r_hard.get('description')!r}")
+
+    if r_hard.get("ok") and not r_secret.get("ok"):
+        fail(
+            "Hardcoded chat_id WORKS, but the secret doesn't.\n"
+            "  → TELEGRAM_CHANNEL_ID has invisible bad characters.\n"
+            "  → Delete the secret and re-create it by TYPING -1003957539319\n"
+            "    on a desktop keyboard (not phone, not paste). Use a hyphen-minus."
+        )
+
+    if not r_hard.get("ok"):
+        desc = r_hard.get("description", "<no description>")
         if "chat not found" in desc.lower():
             fail(
-                "Telegram says it can't find this chat. Three possible causes:\n"
-                "  1. TELEGRAM_CHANNEL_ID is wrong. Expected exactly: -1003957539319\n"
-                "     If yours is different, re-paste it (Settings → Secrets → Update).\n"
-                "  2. The bot is not in the supergroup. Add it as a member.\n"
-                "  3. The supergroup ID changed (rare; happens if you re-created it)."
+                "Even the hardcoded -1003957539319 returns 'chat not found'.\n"
+                "  → The bot @Chavosh2_Bot can't see this chat. Probable causes:\n"
+                "    1. The bot was removed from the supergroup since you added it.\n"
+                "    2. The chat_id of the supergroup is something other than\n"
+                "       -1003957539319 (re-check the URL: t.me/c/<id>/<topic>).\n"
+                "    3. The bot was added to a *different* group, not BaseCamp."
             )
-        fail(f"getChat unexpected error: {desc}")
-    chat = r["result"]
-    print(f"  ✅ Chat is reachable.")
+        fail(f"Hardcoded getChat unexpected error: {desc}")
+
+    chat = r_secret["result"]
+    print(f"\n  ✅ Chat is reachable via the secret.")
     print(f"     id:        {chat.get('id')}")
     print(f"     title:     {chat.get('title')!r}")
     print(f"     type:      {chat.get('type')}  "
