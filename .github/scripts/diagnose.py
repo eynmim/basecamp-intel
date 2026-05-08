@@ -99,27 +99,88 @@ def main() -> None:
     print(f"  hardcoded -> ok={r_hard.get('ok')}, "
           f"description={r_hard.get('description')!r}")
 
-    if r_hard.get("ok") and not r_secret.get("ok"):
-        fail(
-            "Hardcoded chat_id WORKS, but the secret doesn't.\n"
-            "  → TELEGRAM_CHANNEL_ID has invisible bad characters.\n"
-            "  → Delete the secret and re-create it by TYPING -1003957539319\n"
-            "    on a desktop keyboard (not phone, not paste). Use a hyphen-minus."
+    # ---- 2d. Discovery via getUpdates: dump every chat the bot has seen.
+    # If our derived chat_id is wrong, the real one will appear here.
+    print("\n[2d/3] getUpdates — what chats has the bot actually seen?")
+    print("       (For the freshest data: send any message in the supergroup")
+    print("        BEFORE running this diagnostic.)")
+    # deleteWebhook first so getUpdates returns data; we don't have a webhook
+    # because we don't have a webhook configured anyway.
+    call(token, "deleteWebhook", {"drop_pending_updates": False})
+    r = call(token, "getUpdates", {
+        "timeout": 0,
+        "limit": 100,
+        "allowed_updates": [
+            "message", "edited_message", "channel_post",
+            "my_chat_member", "chat_member",
+        ],
+    })
+    seen: dict[int, tuple[str, str]] = {}
+    if r.get("ok"):
+        for upd in r.get("result", []):
+            for key in ("message", "edited_message", "channel_post",
+                        "my_chat_member", "chat_member"):
+                obj = upd.get(key)
+                if obj and "chat" in obj:
+                    chat_obj = obj["chat"]
+                    cid = chat_obj.get("id")
+                    if cid is not None:
+                        seen[cid] = (
+                            str(chat_obj.get("title", "<private>")),
+                            str(chat_obj.get("type", "?")),
+                        )
+    configured_int = None
+    try:
+        configured_int = int(chat_id)
+    except ValueError:
+        pass
+
+    if not seen:
+        print(
+            "  No chats seen in recent updates.\n"
+            "  → Send a message in any topic of the BaseCamp supergroup,\n"
+            "    then re-run this diagnostic. The chat_id will appear here."
         )
+    else:
+        print(f"  Bot has interacted with these {len(seen)} chat(s):")
+        for cid, (title, ctype) in seen.items():
+            mark = "  ← matches your secret" if cid == configured_int else ""
+            print(f"    chat_id={cid:<20} type={ctype:<11} title={title!r}{mark}")
 
-    if not r_hard.get("ok"):
-        desc = r_hard.get("description", "<no description>")
-        if "chat not found" in desc.lower():
-            fail(
-                "Even the hardcoded -1003957539319 returns 'chat not found'.\n"
-                "  → The bot @Chavosh2_Bot can't see this chat. Probable causes:\n"
-                "    1. The bot was removed from the supergroup since you added it.\n"
-                "    2. The chat_id of the supergroup is something other than\n"
-                "       -1003957539319 (re-check the URL: t.me/c/<id>/<topic>).\n"
-                "    3. The bot was added to a *different* group, not BaseCamp."
+    # ---- Verdict on chat reachability ------------------------------------
+    if not r_secret.get("ok"):
+        # Build the most useful failure message we can.
+        msg_lines: list[str] = []
+        msg_lines.append("Telegram refuses the configured chat_id.")
+        if r_hard.get("ok"):
+            msg_lines.append(
+                "  → Hardcoded -1003957539319 worked but your secret didn't.\n"
+                "    TELEGRAM_CHANNEL_ID has invisible bad characters.\n"
+                "    Delete and re-create by TYPING the value on a desktop keyboard."
             )
-        fail(f"Hardcoded getChat unexpected error: {desc}")
+        else:
+            # Both fail. Use discovery if available.
+            group_chats = [
+                (cid, title) for cid, (title, ctype) in seen.items()
+                if cid != configured_int and "group" in (ctype or "").lower()
+            ]
+            if group_chats:
+                msg_lines.append("  → The real chat_id is one of these (from getUpdates):")
+                for cid, title in group_chats:
+                    msg_lines.append(f"      {cid}   title={title!r}")
+                msg_lines.append(
+                    "    Update TELEGRAM_CHANNEL_ID to the one whose title is BaseCamp."
+                )
+            else:
+                msg_lines.append(
+                    "  → Bot has not seen any group chat in recent updates.\n"
+                    "    Either the bot was kicked, or it's in a different group than\n"
+                    "    you think. Open BaseCamp → send a message in any topic →\n"
+                    "    re-run this diagnostic. The real chat_id will appear in [2d/3]."
+                )
+        fail("\n".join(msg_lines))
 
+    # If we get here, getChat with the secret value succeeded.
     chat = r_secret["result"]
     print(f"\n  ✅ Chat is reachable via the secret.")
     print(f"     id:        {chat.get('id')}")
