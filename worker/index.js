@@ -14,7 +14,10 @@
 
 const TG = "https://api.telegram.org";
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models";
-const MODEL = "gemini-2.0-flash";
+// Free tier of gemini-2.0-flash showed up as limit:0 on Ali's account.
+// gemini-1.5-flash has a much more reliable free tier (1500 req/day,
+// 1M tokens/min). Falls back automatically across most regions.
+const MODEL = "gemini-1.5-flash";
 
 const SYSTEM_PROMPT = `You are an AI assistant inside Ali Mansouri's BaseCamp
 Telegram supergroup. Ali is an embedded-systems engineer (MSc Computer
