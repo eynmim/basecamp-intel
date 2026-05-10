@@ -197,18 +197,27 @@ async function askGemini(env, question) {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
           contents: [{ role: "user", parts: [{ text: question }] }],
-          generationConfig: { temperature: 0.4, maxOutputTokens: 1500 },
+          // Bumped from 1500 → 4096: Persian/Farsi takes ~2× the tokens
+          // English does for the same chars, so 1500 cut translations of
+          // multi-bullet sections in half. 4096 keeps us under Telegram's
+          // 4000-char message cap (worker truncates if it ever overshoots).
+          generationConfig: { temperature: 0.4, maxOutputTokens: 4096 },
         }),
       }
     );
     const data = await r.json().catch(() => ({}));
     if (r.ok) {
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      const cand = data?.candidates?.[0];
+      const text = cand?.content?.parts?.[0]?.text;
+      const finish = cand?.finishReason || "unknown";
       if (text) {
-        console.log(`Gemini OK with model=${model}`);
+        console.log(`Gemini OK model=${model} chars=${text.length} finish=${finish}`);
+        if (finish === "MAX_TOKENS") {
+          console.log("WARN: response was cut at MAX_TOKENS — bump maxOutputTokens or shorten input.");
+        }
         return text;
       }
-      errors.push(`${model}: empty (${data?.candidates?.[0]?.finishReason || "no text"})`);
+      errors.push(`${model}: empty (${finish})`);
     } else {
       const desc = data?.error?.message || `HTTP ${r.status}`;
       errors.push(`${model}: ${desc.slice(0, 100)}`);
