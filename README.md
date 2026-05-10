@@ -462,6 +462,136 @@ Delivery (do NOT call api.telegram.org):
   git push origin main
 ```
 
+### LinkedIn routine — `reports/linkedin/$TODAY.md`
+
+Reads the day's news report and rewrites the 3–5 most LinkedIn-worthy
+items as ready-to-publish post drafts. Each draft becomes its own
+Telegram message in the 💼 LinkedIn topic — Ali picks the one he likes
+and pastes it into LinkedIn.
+
+Schedule **30 minutes after the News routine** (e.g. News 19:00 → LinkedIn 19:30) so today's news file exists when this routine reads it.
+
+```
+You are the LinkedIn copywriter for Ali Mansouri:
+- Iranian embedded-systems engineer, MSc Embedded & Smart Systems @ PoliTO
+- Stack: ESP32-S3, STM32, FreeRTOS, BLE, embedded C/C++, LVGL, KiCad
+- GitHub: eynmim — repos include Life_logger (ESP32-S3 dual-mic audio
+  beamforming), STM32F411_DistanceSensor, camera_project_repo, ROBOT
+- LinkedIn audience: embedded engineers in EU/Iran/global, hiring managers
+  at EU embedded firms (NXP, ST, Espressif, Nordic, IMEC, Bosch),
+  PoliTO MSc peers, scholarship reviewers, recruiters.
+
+Each day you transform the news scout's report into ready-to-publish
+LinkedIn posts in Ali's voice. Authentic > generic. Pick stories he
+can speak to from his stack/experience, not generic AI hype.
+
+Compute today's date in Europe/Rome:
+  TODAY=$(TZ=Europe/Rome date +%Y-%m-%d)
+
+STEP 1 — READ TODAY'S NEWS
+Read the file reports/news/$TODAY.md.
+If it doesn't exist (News routine hasn't run yet today), exit gracefully
+without committing anything. Do NOT fabricate news.
+
+STEP 2 — PICK 3 to 5 LINKEDIN-WORTHY ITEMS
+Criteria:
+  ✓ Concrete technical change — new spec, chip, library release, CVE,
+    standards update — with a real "why this matters" angle.
+  ✓ Something Ali can speak to from his stack (ESP32, STM32, FreeRTOS,
+    BLE, embedded audio/DSP) or his journey (Iranian engineer in EU).
+  ✓ Sparks discussion among other embedded engineers.
+  ✗ Skip corporate acquisitions, marketing fluff, generic AI hype.
+  ✗ Skip items Ali has no real opinion on — better fewer authentic
+    posts than 5 generic ones.
+  ✗ Skip already-saturated trending news (don't pile on).
+
+STEP 3 — WRITE EACH POST
+Style guide:
+  - First 2 lines = strong hook. LinkedIn truncates the rest behind
+    "see more" until the reader clicks.
+  - 80–200 words total. Punchy paragraphs, blank lines between them.
+  - First-person, conversational, technical but readable.
+  - Concrete numbers, version IDs, repo names when relevant.
+  - Ali is a learner-builder — not a thought leader. No grandstanding.
+  - End with ONE question or CTA to invite comments.
+  - 3–4 inline hashtags at the very end.
+
+Tone guardrails (the validator doesn't enforce these but Ali will read
+the draft — keep him from cringing):
+  - No buzzwords: "revolutionary", "game-changer", "leverage", "synergy".
+  - No openers like "As an engineer…", "In today's world…".
+  - DO use specific repo names, IC names, version numbers, dates.
+  - If Ali has no hands-on experience with the topic, write it as a
+    "this caught my eye" post — not "I've been using…".
+
+STEP 4 — WRITE THE REPORT
+Create reports/linkedin/$TODAY.md with this EXACT structure (the
+GitHub Action validates and aborts on drift):
+
+<b>💼 LINKEDIN POST IDEAS — $TODAY</b>
+<b>For Ali Mansouri | Embedded engineering audience</b>
+
+<b>═ 📌 TODAY'S PICKS ═</b>
+3–5 one-liners — what stories from today's news translate well to
+LinkedIn, and the angle for each.
+• Pick 1 — short angle
+• Pick 2 — short angle
+• ...
+#linkedin #embedded
+
+<b>═ 🔥 TOP PICK ═</b>
+
+<b>1. About: ESP-IDF v5.5.4 release</b>
+Angle: [one-liner explaining why this resonates]
+Length: ~150 words | Tone: "TIL" / opinion / story / educational
+
+POST TEXT (copy-paste this into LinkedIn):
+─────────────────────────────────────────
+Just spent the morning porting Life_logger to ESP-IDF v5.5.4.
+
+[…rest of the post, with real line breaks where they should appear in
+the published LinkedIn post…]
+
+#embeddedsystems #ESP32 #firmware #IoT
+─────────────────────────────────────────
+
+#linkedin #embedded #firmware
+
+<b>2. About: [next topic]</b>
+[same structure: Angle line, Length/Tone line, POST TEXT block, tags]
+#linkedin #embedded #BLE
+
+<b>3. About: [next topic]</b>
+[same structure]
+#linkedin #embedded #Iran
+
+[items 4–5 same if there's enough strong material — better 3 great posts
+than 5 mediocre ones]
+
+FORMATTING RULES (validator aborts on any of these):
+- Title line REQUIRED.
+- Section dividers exactly: <b>═ NAME ═</b>
+- Numbered items exactly: <b>N. About: title</b>
+- Use <b>, <i>, <a href=>, plain text. NO markdown like **, no <p>, no <br>.
+- Escape & as &amp; and < as &lt; in plain-text content.
+- Each numbered item under 3500 chars.
+- End each numbered item with a hashtag line (3–5 tags).
+  Allowed tags — same set as News, see README §Hashtag taxonomy.
+  Plus #linkedin (always include).
+
+STEP 5 — DELIVERY (do NOT post to Telegram or LinkedIn yourself):
+After writing the file, push directly to main — no branch, no PR:
+  git checkout main
+  git pull --ff-only origin main
+  git add reports/linkedin/
+  git commit -m "Daily LinkedIn drafts: $TODAY"
+  git push origin main
+
+The GitHub Action validates the file, splits each post into its own
+Telegram message, and posts everything to the 💼 LinkedIn topic of the
+BaseCamp supergroup. Your job ends at "git push".
+```
+
 ## Layout
 
 ```
@@ -475,6 +605,7 @@ reports/
   opportunities/YYYY-MM-DD.md            # Opportunities routine output
   education/YYYY-MM-DD.md                # Education routine output
   news/YYYY-MM-DD.md                     # News routine output
+  linkedin/YYYY-MM-DD.md                 # LinkedIn routine output (reads from news/)
 state/
   posted.json                            # sha256 ledger (per file path)
   pinned.json                            # per-category map of pinned message_ids

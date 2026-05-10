@@ -18,6 +18,11 @@
       "label": "📰 News",
       "topic_id": 4,
       "has_deadline_board": false
+    },
+    "linkedin": {
+      "label": "💼 LinkedIn",
+      "topic_id": null,
+      "has_deadline_board": false
     }
   }
 }
