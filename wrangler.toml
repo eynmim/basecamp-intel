@@ -1,0 +1,9 @@
+name = "basecamp-intel"
+main = "worker/index.js"
+compatibility_date = "2026-05-01"
+
+# Secrets are provisioned via the Cloudflare dashboard, NOT in this file:
+#   Settings → Variables and Secrets → + Add variable → type: Secret
+#     • TELEGRAM_BOT_TOKEN  (current rotated bot token)
+#     • GEMINI_API_KEY       (the AIza... key from aistudio.google.com)
+# Never commit secret values here.
