@@ -14,10 +14,20 @@
 
 const TG = "https://api.telegram.org";
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models";
-// Free tier of gemini-2.0-flash showed up as limit:0 on Ali's account.
-// gemini-1.5-flash has a much more reliable free tier (1500 req/day,
-// 1M tokens/min). Falls back automatically across most regions.
-const MODEL = "gemini-1.5-flash";
+// Different accounts have different model availability. We try in
+// preference order; the first one whose generateContent call returns
+// 200 wins. If all fail, askGemini() lists what the API key CAN see
+// so we know what to add.
+const MODELS = [
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
+  "gemini-2.0-flash-001",
+  "gemini-2.0-flash",
+  "gemini-1.5-flash-002",
+  "gemini-1.5-flash-latest",
+  "gemini-1.5-flash-8b",
+  "gemini-pro",
+];
 
 const SYSTEM_PROMPT = `You are an AI assistant inside Ali Mansouri's BaseCamp
 Telegram supergroup. Ali is an embedded-systems engineer (MSc Computer
@@ -143,32 +153,57 @@ export default {
 async function askGemini(env, question) {
   if (!env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY secret is not set");
 
-  const r = await fetch(
-    `${GEMINI}/${MODEL}:generateContent?key=${env.GEMINI_API_KEY}`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: [{ role: "user", parts: [{ text: question }] }],
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 1500,
-        },
-      }),
+  const errors = [];
+  for (const model of MODELS) {
+    const r = await fetch(
+      `${GEMINI}/${model}:generateContent?key=${env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents: [{ role: "user", parts: [{ text: question }] }],
+          generationConfig: { temperature: 0.4, maxOutputTokens: 1500 },
+        }),
+      }
+    );
+    const data = await r.json().catch(() => ({}));
+    if (r.ok) {
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) {
+        console.log(`Gemini OK with model=${model}`);
+        return text;
+      }
+      errors.push(`${model}: empty (${data?.candidates?.[0]?.finishReason || "no text"})`);
+    } else {
+      const desc = data?.error?.message || `HTTP ${r.status}`;
+      errors.push(`${model}: ${desc.slice(0, 100)}`);
+      console.log(`Gemini ${model} failed: ${desc.slice(0, 200)}`);
     }
+  }
+
+  // All preset models failed. List what the key actually has access to so
+  // the next push can target it precisely.
+  let available = "(ListModels also failed)";
+  try {
+    const r = await fetch(`${GEMINI}?key=${env.GEMINI_API_KEY}`);
+    const data = await r.json();
+    if (Array.isArray(data?.models)) {
+      const usable = data.models
+        .filter((m) => Array.isArray(m.supportedGenerationMethods)
+                       && m.supportedGenerationMethods.includes("generateContent"))
+        .map((m) => (m.name || "").replace(/^models\//, ""));
+      available = usable.length ? usable.slice(0, 12).join(", ") : "(no generateContent models)";
+      console.log(`ListModels: ${usable.length} usable: ${usable.join(", ")}`);
+    }
+  } catch (e) {
+    console.log("ListModels failed:", e.message);
+  }
+
+  throw new Error(
+    `All Gemini models I tried failed. Available on your key: ${available}. ` +
+    `Errors: ${errors.slice(0, 3).join(" | ")}`
   );
-  const data = await r.json().catch(() => ({}));
-  if (!r.ok) {
-    const msg = data?.error?.message || `Gemini HTTP ${r.status}`;
-    throw new Error(msg);
-  }
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) {
-    const reason = data?.candidates?.[0]?.finishReason || "no text";
-    throw new Error(`Gemini returned no text (${reason})`);
-  }
-  return text;
 }
 
 async function tg(env, method, payload) {
