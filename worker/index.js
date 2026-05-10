@@ -1,8 +1,10 @@
 // Cloudflare Worker — Telegram webhook bridge to Gemini.
 //
-// Triggers when a message in the BaseCamp supergroup either:
-//   (a) starts with "/ask <question>", or
-//   (b) mentions @Chavosh2_Bot.
+// Triggers when a message in the BaseCamp supergroup matches:
+//   /ask <question>          → answer in the same language as the question
+//   /fa <question>            → answer in Persian/Farsi regardless of input
+//   /translate <text>         → translate <text> to Persian (Farsi)
+//   @Chavosh2_Bot <question>  → same as /ask but via mention
 // The Worker calls Gemini, then replies in the same topic, as a reply-to
 // to the user's message.
 //
@@ -22,6 +24,16 @@ mobility. His core stack: ESP32-S3, STM32, FreeRTOS, BLE, embedded C/C++,
 LVGL, KiCad PCB, IoT firmware, OTA, power management. His portfolio:
 github.com/eynmim — repos include Life_logger (ESP32-S3 dual-mic beamforming),
 STM32F411_DistanceSensor, camera_project_repo, ROBOT.
+
+Languages: Ali is Persian-native (مادری-زبان فارسی), fluent English,
+intermediate Italian.
+  - If the user writes the question in Persian/Farsi, reply in Persian.
+  - If the message is preceded with "[REPLY-IN-PERSIAN]" or "[TRANSLATE-TO-PERSIAN]",
+    follow that directive precisely.
+  - Otherwise default to English unless the user explicitly requests another language.
+  - Persian replies should use natural everyday Persian — not heavily Arabic-loaded
+    formal Persian. Use Persian numerals (۱۲۳) only when listing — keep dates,
+    deadlines, and technical identifiers (ESP32, BLE 5.4, etc.) in Latin form.
 
 Your job: answer questions about embedded jobs, scholarships, summer schools,
 courses, EU mobility, and engineering deep-dives. Be CONCISE and TECHNICAL.
@@ -58,25 +70,48 @@ export default {
     const m = update.message || update.edited_message;
     if (!m?.text || !m?.chat?.id) return new Response("ok");
 
-    // Filter: only respond when the user opted in via /ask or @-mention.
+    // Filter: only respond to one of the supported triggers.
     const text = m.text.trim();
     let question = null;
-    if (text.startsWith("/ask")) {
+    let mode = null; // "ask" | "fa" | "translate" | "mention"
+
+    if (/^\/ask(@\w+)?(\s|$)/.test(text)) {
       question = text.replace(/^\/ask(@\w+)?\s*/, "").trim();
+      mode = "ask";
+    } else if (/^\/fa(@\w+)?(\s|$)/.test(text)) {
+      question = text.replace(/^\/fa(@\w+)?\s*/, "").trim();
+      mode = "fa";
+    } else if (/^\/translate(@\w+)?(\s|$)/.test(text)) {
+      question = text.replace(/^\/translate(@\w+)?\s*/, "").trim();
+      mode = "translate";
     } else if (text.includes("@Chavosh2_Bot")) {
       question = text.replace(/@Chavosh2_Bot/g, "").trim();
+      mode = "mention";
     } else {
       return new Response("ok");
     }
 
     if (!question) {
       await tgSend(env, m,
-        "Send `/ask <your question>` or mention me with the question.\n\n" +
-        "Examples:\n" +
-        "• `/ask find me embedded summer schools in Europe with deadlines next month`\n" +
-        "• `@Chavosh2_Bot give me details about KAIST embedded MSc — eligibility, stipend, deadline`"
+        "*How to use me*\n\n" +
+        "• `/ask <question>` — answer in same language as your question\n" +
+        "• `/fa <question>` — answer in Persian (پاسخ به فارسی)\n" +
+        "• `/translate <text>` — translate to Persian (ترجمه به فارسی)\n" +
+        "• `@Chavosh2_Bot <question>` — same as /ask via mention\n\n" +
+        "*Examples*\n" +
+        "• `/ask find me embedded summer schools in Europe`\n" +
+        "• `/fa شرایط بورس DAAD برای دانشجوی ایرانی چیست؟`\n" +
+        "• `/translate Iranian passport holders are eligible for the EU Blue Card.`"
       );
       return new Response("ok");
+    }
+
+    // Wrap the question with a directive so Gemini honours the chosen mode.
+    let prompt = question;
+    if (mode === "fa") {
+      prompt = `[REPLY-IN-PERSIAN]\n\nThe user's question:\n${question}`;
+    } else if (mode === "translate") {
+      prompt = `[TRANSLATE-TO-PERSIAN]\n\nProvide ONLY the Persian translation of the text below — no preamble, no explanation, no transliteration. Keep technical identifiers (ESP32, BLE, MCU, etc.) in Latin form. Text to translate:\n\n${question}`;
     }
 
     try {
@@ -87,7 +122,7 @@ export default {
         ...(m.message_thread_id && { message_thread_id: m.message_thread_id }),
       }).catch(() => {});
 
-      const answer = await askGemini(env, question);
+      const answer = await askGemini(env, prompt);
       await tgSend(env, m, answer);
     } catch (e) {
       await tgSend(env, m, `❌ ${e.message || "Unknown error"}`);
