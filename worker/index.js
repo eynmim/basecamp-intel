@@ -114,6 +114,8 @@ export default {
       prompt = `[TRANSLATE-TO-PERSIAN]\n\nProvide ONLY the Persian translation of the text below — no preamble, no explanation, no transliteration. Keep technical identifiers (ESP32, BLE, MCU, etc.) in Latin form. Text to translate:\n\n${question}`;
     }
 
+    console.log(`incoming: mode=${mode} from=${m.from?.username || m.from?.id} chat=${m.chat.id} thread=${m.message_thread_id || "-"} q=${question.slice(0, 80)}`);
+
     try {
       // Show "typing..." while Gemini works (best-effort, ignore failure).
       await tg(env, "sendChatAction", {
@@ -122,9 +124,13 @@ export default {
         ...(m.message_thread_id && { message_thread_id: m.message_thread_id }),
       }).catch(() => {});
 
+      console.log("calling Gemini...");
       const answer = await askGemini(env, prompt);
+      console.log(`Gemini OK, ${answer.length} chars; sending to Telegram...`);
       await tgSend(env, m, answer);
+      console.log("send complete.");
     } catch (e) {
+      console.log("handler error:", e.message);
       await tgSend(env, m, `❌ ${e.message || "Unknown error"}`);
     }
     return new Response("ok");
@@ -164,11 +170,22 @@ async function askGemini(env, question) {
 
 async function tg(env, method, payload) {
   if (!env.TELEGRAM_BOT_TOKEN) throw new Error("TELEGRAM_BOT_TOKEN secret is not set");
-  return fetch(`${TG}/bot${env.TELEGRAM_BOT_TOKEN}/${method}`, {
+  const r = await fetch(`${TG}/bot${env.TELEGRAM_BOT_TOKEN}/${method}`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(payload),
   });
+  let data;
+  try {
+    data = await r.json();
+  } catch {
+    data = { ok: false, description: `HTTP ${r.status} (non-JSON body)` };
+  }
+  if (!data.ok) {
+    console.log(`tg.${method} FAILED:`, data.description, "payload:",
+      JSON.stringify(payload).slice(0, 300));
+  }
+  return data;
 }
 
 async function tgSend(env, m, text) {
@@ -176,10 +193,29 @@ async function tgSend(env, m, text) {
   const trimmed = text.length > 4000
     ? text.slice(0, 4000) + "\n…[truncated; ask a more specific question]"
     : text;
-  return tg(env, "sendMessage", {
+
+  const base = {
     chat_id: m.chat.id,
     text: trimmed,
-    parse_mode: "Markdown",
+    reply_to_message_id: m.message_id,
+    ...(m.message_thread_id && { message_thread_id: m.message_thread_id }),
+  };
+
+  // Try with Markdown first for nice formatting. If the parser rejects the
+  // text (Gemini sometimes emits stray `_` or `*` that breaks Telegram's
+  // Markdown V1), fall back to plain text so the user always gets the reply.
+  let r = await tg(env, "sendMessage", { ...base, parse_mode: "Markdown" });
+  if (r.ok) return r;
+
+  console.log("Markdown send failed; retrying plain text.");
+  r = await tg(env, "sendMessage", base);
+  if (r.ok) return r;
+
+  // Last-ditch: send a short error notice so the user knows something hit.
+  console.log("Plain send also failed:", r.description);
+  return tg(env, "sendMessage", {
+    chat_id: m.chat.id,
+    text: `❌ Telegram refused the reply: ${r.description}`,
     reply_to_message_id: m.message_id,
     ...(m.message_thread_id && { message_thread_id: m.message_thread_id }),
   });
