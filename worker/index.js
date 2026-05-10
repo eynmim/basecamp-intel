@@ -5,6 +5,14 @@
 //   /fa <question>            → answer in Persian/Farsi regardless of input
 //   /translate <text>         → translate <text> to Persian (Farsi)
 //   @Chavosh2_Bot <question>  → same as /ask but via mention
+//
+// "Reply-to" shortcut: if the user *replies* to another message and uses
+// the command with no inline text, the replied message's text becomes the
+// input. So replying to a long English bullet list with /fa or /translate
+// returns a Persian translation that preserves the original structure.
+// Replying with /fa <question> instead asks the question in Persian using
+// the replied message as context.
+//
 // The Worker calls Gemini, then replies in the same topic, as a reply-to
 // to the user's message.
 //
@@ -104,6 +112,15 @@ export default {
       return new Response("ok");
     }
 
+    // Reply-to shortcut: if the command has no inline text but the user
+    // replied to a message, fall back to the replied message's text.
+    // Tracked separately so the prompt builder knows it came from a reply.
+    const repliedText = m.reply_to_message?.text || m.reply_to_message?.caption || "";
+    const usedRepliedAsInput = !question && !!repliedText;
+    if (usedRepliedAsInput) {
+      question = repliedText;
+    }
+
     if (!question) {
       await tgSend(env, m,
         "*How to use me*\n\n" +
@@ -111,6 +128,9 @@ export default {
         "• `/fa <question>` — answer in Persian (پاسخ به فارسی)\n" +
         "• `/translate <text>` — translate to Persian (ترجمه به فارسی)\n" +
         "• `@Chavosh2_Bot <question>` — same as /ask via mention\n\n" +
+        "*Reply shortcut*\n" +
+        "Reply to any message and send `/fa` or `/translate` (no extra text)\n" +
+        "to translate that message to Persian, preserving structure.\n\n" +
         "*Examples*\n" +
         "• `/ask find me embedded summer schools in Europe`\n" +
         "• `/fa شرایط بورس DAAD برای دانشجوی ایرانی چیست؟`\n" +
@@ -120,14 +140,28 @@ export default {
     }
 
     // Wrap the question with a directive so Gemini honours the chosen mode.
+    const TRANSLATE_RULES =
+      "Translate the following text to Persian (Farsi). Rules:\n" +
+      "- Preserve the original structure EXACTLY: bullets, numbering, line breaks, paragraph spacing.\n" +
+      "- Keep technical identifiers in Latin form: chip names (ESP32, STM32, MCU), protocols (BLE, Wi-Fi), institutions (IEEE, DAAD, MIT), dates, $/€ amounts, URLs, repo names, hashtags.\n" +
+      "- Use natural everyday Persian, not heavily Arabic-loaded formal register.\n" +
+      "- Persian numerals (۱) inside body prose are OK, but keep dates and identifiers Latin so they remain searchable.\n" +
+      "- No preamble, no commentary, no transliteration. Output ONLY the translation.";
+
     let prompt = question;
-    if (mode === "fa") {
-      prompt = `[REPLY-IN-PERSIAN]\n\nThe user's question:\n${question}`;
-    } else if (mode === "translate") {
-      prompt = `[TRANSLATE-TO-PERSIAN]\n\nProvide ONLY the Persian translation of the text below — no preamble, no explanation, no transliteration. Keep technical identifiers (ESP32, BLE, MCU, etc.) in Latin form. Text to translate:\n\n${question}`;
+    if (mode === "translate" || (mode === "fa" && usedRepliedAsInput)) {
+      // /translate <text>  OR  /fa replying to a message → translate to Persian.
+      prompt = `[TRANSLATE-TO-PERSIAN]\n\n${TRANSLATE_RULES}\n\nText to translate:\n\n${question}`;
+    } else if (mode === "fa") {
+      // /fa <question> → answer in Persian (with replied message as context if any).
+      const ctx = repliedText ? `Context (message the user is replying to):\n${repliedText}\n\n` : "";
+      prompt = `[REPLY-IN-PERSIAN]\n\n${ctx}User's question:\n${question}`;
+    } else if ((mode === "ask" || mode === "mention") && repliedText && !usedRepliedAsInput) {
+      // /ask <question> while replying to a message → use it as context.
+      prompt = `Context (message the user is replying to):\n${repliedText}\n\nUser's question:\n${question}`;
     }
 
-    console.log(`incoming: mode=${mode} from=${m.from?.username || m.from?.id} chat=${m.chat.id} thread=${m.message_thread_id || "-"} q=${question.slice(0, 80)}`);
+    console.log(`incoming: mode=${mode}${usedRepliedAsInput ? "+reply" : (repliedText ? "+ctx" : "")} from=${m.from?.username || m.from?.id} chat=${m.chat.id} thread=${m.message_thread_id || "-"} q=${question.slice(0, 80)}`);
 
     try {
       // Show "typing..." while Gemini works (best-effort, ignore failure).
