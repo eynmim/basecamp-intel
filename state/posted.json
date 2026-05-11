@@ -17,6 +17,12 @@
       "category": "news",
       "posted_at": "2026-05-10T14:43:57.345861+00:00",
       "message_count": 12
+    },
+    "reports/news/2026-05-11.md": {
+      "sha256": "c7681379b5e68fa26bb460ffb2c178c8906bd144d07f8313e4101445363afbac",
+      "category": "news",
+      "posted_at": "2026-05-11T06:12:49.865101+00:00",
+      "message_count": 12
     }
   }
 }
