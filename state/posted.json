@@ -89,6 +89,12 @@
       "category": "opportunities",
       "posted_at": "2026-05-19T05:20:21.298911+00:00",
       "message_count": 21
+    },
+    "reports/news/2026-05-20.md": {
+      "sha256": "7d6df69803ab347bd583b2b31a80c3559dc6a947da120c8a7ccf890f1d3be490",
+      "category": "news",
+      "posted_at": "2026-05-20T05:13:34.261287+00:00",
+      "message_count": 12
     }
   }
 }
