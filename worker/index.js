@@ -7,8 +7,12 @@
 //   /linkedin <topic>         → write a ready-to-publish LinkedIn post in
 //                               Ali's voice (also aliased to /lp)
 //   /keep                     → save the replied-to message into the 📝 Ready
-//                               topic (handy for marking LinkedIn drafts you
-//                               want to publish later)
+//                               topic (handy for parking drafts you want to
+//                               review later before publishing)
+//   /schedule                 → push the replied/inline post text into the
+//                               Buffer queue; Buffer publishes it at the next
+//                               LinkedIn slot. Fully automated path — no
+//                               Buffer UI needed.
 //   @Chavosh2_Bot <question>  → same as /ask but via mention
 //
 // "Reply-to" shortcut: if the user *replies* to another message and uses
@@ -25,6 +29,7 @@
 //   GEMINI_API_KEY
 
 const TG = "https://api.telegram.org";
+const BUFFER_API = "https://api.bufferapp.com/1";
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models";
 // Different accounts have different model availability. We try in
 // preference order; the first one whose generateContent call returns
@@ -104,6 +109,11 @@ export default {
       return await handleKeep(env, m);
     }
 
+    // /schedule queues the replied (or inline) post text into Buffer.
+    if (/^\/schedule(@\w+)?(\s|$)/.test(text)) {
+      return await handleSchedule(env, m);
+    }
+
     // Filter: only respond to one of the supported LLM triggers.
     let question = null;
     let mode = null; // "ask" | "fa" | "translate" | "mention"
@@ -144,12 +154,14 @@ export default {
         "• `/translate <text>` — translate to Persian (ترجمه به فارسی)\n" +
         "• `/linkedin <topic>` — write a ready-to-publish LinkedIn post (alias `/lp`)\n" +
         "• `/keep` (as reply) — save a draft into the 📝 Ready topic\n" +
+        "• `/schedule` (as reply) — push the draft into Buffer's LinkedIn queue\n" +
         "• `@Chavosh2_Bot <question>` — same as /ask via mention\n\n" +
         "*Reply shortcuts*\n" +
         "Reply to any message and send:\n" +
         "  `/fa` or `/translate` → translate that message to Persian.\n" +
         "  `/linkedin` → turn that message into a LinkedIn post.\n" +
-        "  `/keep` → copy that message into the 📝 Ready topic.\n\n" +
+        "  `/keep` → copy that message into the 📝 Ready topic.\n" +
+        "  `/schedule` → queue that message in Buffer for auto-posting.\n\n" +
         "*Examples*\n" +
         "• `/ask find me embedded summer schools in Europe`\n" +
         "• `/fa شرایط بورس DAAD برای دانشجوی ایرانی چیست؟`\n" +
@@ -358,6 +370,82 @@ async function handleKeep(env, m) {
     );
   } else {
     await tgSend(env, m, `❌ Couldn't save to Ready topic: ${copy.description || "unknown error"}`);
+  }
+  return new Response("ok");
+}
+
+async function handleSchedule(env, m) {
+  const text = m.text.trim();
+  let postText = text.replace(/^\/schedule(@\w+)?\s*/, "").trim();
+  let source = "inline";
+
+  if (!postText && m.reply_to_message) {
+    postText = m.reply_to_message.text || m.reply_to_message.caption || "";
+    source = "reply";
+  }
+
+  if (!postText) {
+    await tgSend(env, m,
+      "Reply to a LinkedIn draft (e.g. one from `/linkedin`) with `/schedule`, " +
+      "or use `/schedule <post text>` directly.\n\n" +
+      "The post is added to your Buffer queue and publishes at the next " +
+      "scheduled LinkedIn slot — no Buffer UI needed."
+    );
+    return new Response("ok");
+  }
+
+  if (!env.BUFFER_ACCESS_TOKEN || !env.BUFFER_LINKEDIN_PROFILE_ID) {
+    await tgSend(env, m,
+      "📋 *Buffer isn't connected yet.* To enable `/schedule`:\n\n" +
+      "1. https://publish.buffer.com/developers/apps → *Create app* " +
+      "(name: anything, e.g. `basecamp-intel-bot`).\n" +
+      "2. After creating, copy the *Access Token* shown on the app page.\n" +
+      "3. Get your LinkedIn profile id from Buffer by visiting " +
+      "`https://api.bufferapp.com/1/profiles.json?access_token=YOUR_TOKEN` " +
+      "in a browser. Find the `id` field of the entry whose `service` is `linkedin`.\n" +
+      "4. In Cloudflare Worker → *Settings → Variables and Secrets* → *+ Add* " +
+      "(both as type *Secret*):\n" +
+      "   • `BUFFER_ACCESS_TOKEN` = the access token\n" +
+      "   • `BUFFER_LINKEDIN_PROFILE_ID` = the linkedin profile id\n" +
+      "5. Deploy. Try `/schedule` again."
+    );
+    return new Response("ok");
+  }
+
+  console.log(`schedule: source=${source} chars=${postText.length}`);
+
+  try {
+    const body = new URLSearchParams();
+    body.append("access_token", env.BUFFER_ACCESS_TOKEN);
+    body.append("profile_ids[]", env.BUFFER_LINKEDIN_PROFILE_ID);
+    body.append("text", postText);
+
+    const r = await fetch(`${BUFFER_API}/updates/create.json`, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: body.toString(),
+    });
+    const data = await r.json().catch(() => ({}));
+
+    if (!r.ok || !data.success) {
+      const desc = data?.message || `Buffer HTTP ${r.status}`;
+      console.log(`Buffer rejected: ${desc} (code=${data?.code})`);
+      throw new Error(desc);
+    }
+
+    const update = Array.isArray(data.updates) ? data.updates[0] : null;
+    const dueAt = update?.due_at;
+    const slot = dueAt
+      ? new Date(dueAt * 1000).toLocaleString("en-GB", { timeZone: "Europe/Rome" })
+      : "next available slot";
+
+    console.log(`Buffer queued: id=${update?.id} due=${slot}`);
+    await tgSend(env, m,
+      `✅ *Queued in Buffer.*\nWill publish at: \`${slot}\` (Rome time).\n\n` +
+      `Open buffer.com → Queue if you want to edit or re-time it before publish.`
+    );
+  } catch (e) {
+    await tgSend(env, m, `❌ Buffer error: ${e.message}`);
   }
   return new Response("ok");
 }
