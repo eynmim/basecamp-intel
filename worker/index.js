@@ -185,6 +185,21 @@ export default {
       "- Genuine voice — Ali is a learner-builder, not a thought leader.\n" +
       "- End with ONE question or CTA to invite comments.\n" +
       "- 3-4 inline hashtags at the very end (e.g., #embeddedsystems #ESP32).\n\n" +
+      "If the topic LOOKS like news content (chip release, CVE, library version, " +
+      "standards update, regulatory change), this is a REACTION post, NOT a " +
+      "summary. The reader probably already saw the news. Ali's job is to add " +
+      "perspective: what it means for his stack, what he'll do about it, why " +
+      "it matters for embedded engineers. Skip the 'what happened' recap; lead " +
+      "with the 'so what'.\n\n" +
+      "Source link handling:\n" +
+      "- If the topic contains a URL (e.g. <a href='…'> or a bare https URL), " +
+      "include the URL once on its OWN LINE near the end of the post (before " +
+      "the hashtags). LinkedIn auto-generates a preview card from it, which " +
+      "boosts reach.\n" +
+      "- Do NOT keep the <a href='…'>label</a> HTML — strip the tags and use " +
+      "the bare URL only.\n" +
+      "- Don't include URLs that point to admin/login pages, only public " +
+      "articles / release notes / vendor announcements.\n\n" +
       "Guardrails:\n" +
       "- NO buzzwords: 'revolutionary', 'game-changer', 'leverage', 'synergy'.\n" +
       "- NO openers like 'As an engineer…' or 'In today's world…'.\n" +
