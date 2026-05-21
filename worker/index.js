@@ -4,6 +4,8 @@
 //   /ask <question>          → answer in the same language as the question
 //   /fa <question>            → answer in Persian/Farsi regardless of input
 //   /translate <text>         → translate <text> to Persian (Farsi)
+//   /linkedin <topic>         → write a ready-to-publish LinkedIn post in
+//                               Ali's voice (also aliased to /lp)
 //   /keep                     → save the replied-to message into the 📝 Ready
 //                               topic (handy for marking LinkedIn drafts you
 //                               want to publish later)
@@ -115,6 +117,9 @@ export default {
     } else if (/^\/translate(@\w+)?(\s|$)/.test(text)) {
       question = text.replace(/^\/translate(@\w+)?\s*/, "").trim();
       mode = "translate";
+    } else if (/^\/(linkedin|lp)(@\w+)?(\s|$)/.test(text)) {
+      question = text.replace(/^\/(linkedin|lp)(@\w+)?\s*/, "").trim();
+      mode = "linkedin";
     } else if (text.includes("@Chavosh2_Bot")) {
       question = text.replace(/@Chavosh2_Bot/g, "").trim();
       mode = "mention";
@@ -137,16 +142,19 @@ export default {
         "• `/ask <question>` — answer in same language as your question\n" +
         "• `/fa <question>` — answer in Persian (پاسخ به فارسی)\n" +
         "• `/translate <text>` — translate to Persian (ترجمه به فارسی)\n" +
-        "• `/keep` (as reply) — save a LinkedIn draft into the 📝 Ready topic\n" +
+        "• `/linkedin <topic>` — write a ready-to-publish LinkedIn post (alias `/lp`)\n" +
+        "• `/keep` (as reply) — save a draft into the 📝 Ready topic\n" +
         "• `@Chavosh2_Bot <question>` — same as /ask via mention\n\n" +
         "*Reply shortcuts*\n" +
         "Reply to any message and send:\n" +
         "  `/fa` or `/translate` → translate that message to Persian.\n" +
+        "  `/linkedin` → turn that message into a LinkedIn post.\n" +
         "  `/keep` → copy that message into the 📝 Ready topic.\n\n" +
         "*Examples*\n" +
         "• `/ask find me embedded summer schools in Europe`\n" +
         "• `/fa شرایط بورس DAAD برای دانشجوی ایرانی چیست؟`\n" +
-        "• `/translate Iranian passport holders are eligible for the EU Blue Card.`"
+        "• `/translate Iranian passport holders are eligible for the EU Blue Card.`\n" +
+        "• `/linkedin just upgraded ESP-IDF to v5.5.4 — BLE pairing CVE finally fixed`"
       );
       return new Response("ok");
     }
@@ -160,6 +168,33 @@ export default {
       "- Persian numerals (۱) inside body prose are OK, but keep dates and identifiers Latin so they remain searchable.\n" +
       "- No preamble, no commentary, no transliteration. Output ONLY the translation.";
 
+    const LINKEDIN_RULES =
+      "Write ONE ready-to-publish LinkedIn post about the topic below.\n\n" +
+      "Voice: Ali Mansouri — Iranian embedded-systems engineer, MSc Embedded & " +
+      "Smart Systems @ Politecnico di Torino (2025-2027). Stack: ESP32-S3, STM32, " +
+      "FreeRTOS, BLE, embedded C/C++, LVGL, KiCad. GitHub: eynmim — repos: " +
+      "Life_logger (ESP32-S3 dual-mic audio beamforming), STM32F411_DistanceSensor, " +
+      "camera_project_repo, ROBOT. Audience: embedded engineers worldwide, hiring " +
+      "managers at EU embedded firms (NXP, ST, Espressif, Nordic, IMEC, Bosch), " +
+      "PoliTO MSc peers, recruiters.\n\n" +
+      "Structure & style:\n" +
+      "- First 2 lines = strong hook. LinkedIn truncates the rest behind 'see more'.\n" +
+      "- 80-200 words total. Short paragraphs, blank line between them.\n" +
+      "- First-person, conversational, technical but readable.\n" +
+      "- Concrete: real version numbers, chip names, repo names, dates.\n" +
+      "- Genuine voice — Ali is a learner-builder, not a thought leader.\n" +
+      "- End with ONE question or CTA to invite comments.\n" +
+      "- 3-4 inline hashtags at the very end (e.g., #embeddedsystems #ESP32).\n\n" +
+      "Guardrails:\n" +
+      "- NO buzzwords: 'revolutionary', 'game-changer', 'leverage', 'synergy'.\n" +
+      "- NO openers like 'As an engineer…' or 'In today's world…'.\n" +
+      "- If Ali has no hands-on experience with the topic, frame it as 'this " +
+      "caught my eye' / 'TIL' — NOT 'I've been using…'.\n" +
+      "- Don't pad with emoji.\n\n" +
+      "Output ONLY the post text — no preamble like 'Here's a draft:', no " +
+      "metadata, no commentary. Just the body the user can copy-paste straight " +
+      "into LinkedIn's editor.";
+
     let prompt = question;
     if (mode === "translate" || (mode === "fa" && usedRepliedAsInput)) {
       // /translate <text>  OR  /fa replying to a message → translate to Persian.
@@ -168,6 +203,12 @@ export default {
       // /fa <question> → answer in Persian (with replied message as context if any).
       const ctx = repliedText ? `Context (message the user is replying to):\n${repliedText}\n\n` : "";
       prompt = `[REPLY-IN-PERSIAN]\n\n${ctx}User's question:\n${question}`;
+    } else if (mode === "linkedin") {
+      // /linkedin <topic> (or as reply with no inline text) → polished LinkedIn post.
+      const extra = repliedText && !usedRepliedAsInput
+        ? `\nAdditional context (message user is replying to):\n${repliedText}\n`
+        : "";
+      prompt = `[WRITE-LINKEDIN-POST]\n\n${LINKEDIN_RULES}\n\nTopic:\n${question}${extra}`;
     } else if ((mode === "ask" || mode === "mention") && repliedText && !usedRepliedAsInput) {
       // /ask <question> while replying to a message → use it as context.
       prompt = `Context (message the user is replying to):\n${repliedText}\n\nUser's question:\n${question}`;
