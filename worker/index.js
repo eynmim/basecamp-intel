@@ -4,14 +4,16 @@
 //   /ask <question>          → answer in the same language as the question
 //   /fa <question>            → answer in Persian/Farsi regardless of input
 //   /translate <text>         → translate <text> to Persian (Farsi)
+//   /keep                     → save the replied-to message into the 📝 Ready
+//                               topic (handy for marking LinkedIn drafts you
+//                               want to publish later)
 //   @Chavosh2_Bot <question>  → same as /ask but via mention
 //
 // "Reply-to" shortcut: if the user *replies* to another message and uses
-// the command with no inline text, the replied message's text becomes the
-// input. So replying to a long English bullet list with /fa or /translate
-// returns a Persian translation that preserves the original structure.
-// Replying with /fa <question> instead asks the question in Persian using
-// the replied message as context.
+// /fa, /translate, /ask, or /keep with no inline text, the replied message
+// is treated as the implicit input. So replying to a draft with /fa returns
+// a Persian translation that preserves the structure, and replying with
+// /keep moves the draft into the Ready topic without rewriting it.
 //
 // The Worker calls Gemini, then replies in the same topic, as a reply-to
 // to the user's message.
@@ -91,8 +93,16 @@ export default {
     const m = update.message || update.edited_message;
     if (!m?.text || !m?.chat?.id) return new Response("ok");
 
-    // Filter: only respond to one of the supported triggers.
     const text = m.text.trim();
+
+    // /keep is handled inline (no LLM call) — copy the replied message
+    // into the Ready topic. Handle before the Gemini filter so it doesn't
+    // burn quota.
+    if (/^\/keep(@\w+)?(\s|$)/.test(text)) {
+      return await handleKeep(env, m);
+    }
+
+    // Filter: only respond to one of the supported LLM triggers.
     let question = null;
     let mode = null; // "ask" | "fa" | "translate" | "mention"
 
@@ -127,10 +137,12 @@ export default {
         "• `/ask <question>` — answer in same language as your question\n" +
         "• `/fa <question>` — answer in Persian (پاسخ به فارسی)\n" +
         "• `/translate <text>` — translate to Persian (ترجمه به فارسی)\n" +
+        "• `/keep` (as reply) — save a LinkedIn draft into the 📝 Ready topic\n" +
         "• `@Chavosh2_Bot <question>` — same as /ask via mention\n\n" +
-        "*Reply shortcut*\n" +
-        "Reply to any message and send `/fa` or `/translate` (no extra text)\n" +
-        "to translate that message to Persian, preserving structure.\n\n" +
+        "*Reply shortcuts*\n" +
+        "Reply to any message and send:\n" +
+        "  `/fa` or `/translate` → translate that message to Persian.\n" +
+        "  `/keep` → copy that message into the 📝 Ready topic.\n\n" +
         "*Examples*\n" +
         "• `/ask find me embedded summer schools in Europe`\n" +
         "• `/fa شرایط بورس DAAD برای دانشجوی ایرانی چیست؟`\n" +
@@ -247,6 +259,51 @@ async function askGemini(env, question) {
     `All Gemini models I tried failed. Available on your key: ${available}. ` +
     `Errors: ${errors.slice(0, 3).join(" | ")}`
   );
+}
+
+async function handleKeep(env, m) {
+  if (!m.reply_to_message) {
+    await tgSend(env, m,
+      "Reply to a draft you want to save, then send `/keep`.\n\n" +
+      "Example: long-press a LinkedIn draft → *Reply* → type `/keep` → send."
+    );
+    return new Response("ok");
+  }
+
+  const readyTopicId = parseInt(env.READY_TOPIC_ID || "", 10);
+  if (!readyTopicId) {
+    await tgSend(env, m,
+      "📝 *Ready topic isn't configured yet.* To enable `/keep`:\n\n" +
+      "1. Create a topic in BaseCamp called `📝 Ready to publish`.\n" +
+      "2. Send any message inside it → long-press → *Copy Link* → " +
+      "the number between the second and third slash is the topic id.\n" +
+      "3. In Cloudflare Worker → Settings → Variables and Secrets → *+ Add*:\n" +
+      "   • Type: Plaintext (not Secret — topic ids aren't sensitive).\n" +
+      "   • Name: `READY_TOPIC_ID`\n" +
+      "   • Value: that number.\n" +
+      "4. Try `/keep` again."
+    );
+    return new Response("ok");
+  }
+
+  console.log(`keep: copying msg=${m.reply_to_message.message_id} from thread=${m.message_thread_id || "main"} to thread=${readyTopicId}`);
+
+  const copy = await tg(env, "copyMessage", {
+    chat_id: m.chat.id,
+    from_chat_id: m.chat.id,
+    message_id: m.reply_to_message.message_id,
+    message_thread_id: readyTopicId,
+  });
+
+  if (copy.ok) {
+    await tgSend(env, m,
+      "✅ Saved to *📝 Ready to publish*.\n" +
+      "Browse that topic whenever you're ready — copy the post text into LinkedIn."
+    );
+  } else {
+    await tgSend(env, m, `❌ Couldn't save to Ready topic: ${copy.description || "unknown error"}`);
+  }
+  return new Response("ok");
 }
 
 async function tg(env, method, payload) {
