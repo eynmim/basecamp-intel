@@ -287,6 +287,12 @@
       "category": "opportunities",
       "posted_at": "2026-06-07T05:25:16.850555+00:00",
       "message_count": 28
+    },
+    "reports/news/2026-06-08.md": {
+      "sha256": "38260aeb5e7f02757add17765747ac0821ac9b2bd9328d4facfdb23af4b5dc59",
+      "category": "news",
+      "posted_at": "2026-06-08T05:15:59.918962+00:00",
+      "message_count": 17
     }
   }
 }
