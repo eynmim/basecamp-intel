@@ -353,6 +353,12 @@
       "category": "opportunities",
       "posted_at": "2026-06-13T05:21:21.175339+00:00",
       "message_count": 30
+    },
+    "reports/news/2026-06-14.md": {
+      "sha256": "d59ce9f4b2b710603dffcd13283794ed87042729f7527db63213c4e5e278b169",
+      "category": "news",
+      "posted_at": "2026-06-14T05:15:27.445521+00:00",
+      "message_count": 17
     }
   }
 }
