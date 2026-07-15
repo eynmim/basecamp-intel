@@ -683,6 +683,12 @@
       "category": "news",
       "posted_at": "2026-07-15T05:13:51.038611+00:00",
       "message_count": 17
+    },
+    "reports/2026-07-15.md": {
+      "sha256": "e2ba2e9379a90ad15fd35456e11c827ffc7e1ec7c977bad741fddef8bb9799da",
+      "category": "opportunities",
+      "posted_at": "2026-07-15T05:28:49.949363+00:00",
+      "message_count": 41
     }
   }
 }
