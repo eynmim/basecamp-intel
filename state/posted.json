@@ -695,6 +695,12 @@
       "category": "opportunities",
       "posted_at": "2026-07-16T05:19:33.927137+00:00",
       "message_count": 39
+    },
+    "reports/news/2026-07-17.md": {
+      "sha256": "50c7ce7c56aee98a380b1f312ad57768288b3c97c07a6e49857f704d3af06c57",
+      "category": "news",
+      "posted_at": "2026-07-17T05:15:34.771014+00:00",
+      "message_count": 17
     }
   }
 }
