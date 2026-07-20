@@ -725,6 +725,12 @@
       "category": "news",
       "posted_at": "2026-07-19T05:18:14.459772+00:00",
       "message_count": 17
+    },
+    "reports/news/2026-07-20.md": {
+      "sha256": "fd85506f33df548209fef774f2800b8b57f5f19cc3308081a173b062aeadb633",
+      "category": "news",
+      "posted_at": "2026-07-20T05:12:25.293793+00:00",
+      "message_count": 17
     }
   }
 }
