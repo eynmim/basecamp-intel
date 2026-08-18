@@ -1025,6 +1025,12 @@
       "category": "news",
       "posted_at": "2026-08-17T05:40:32.056051+00:00",
       "message_count": 17
+    },
+    "reports/news/2026-08-18.md": {
+      "sha256": "84d35fe759867069d6a22585278316a92d1908c3a9cb61672a14377f7a1ba06e",
+      "category": "news",
+      "posted_at": "2026-08-18T05:13:43.963878+00:00",
+      "message_count": 17
     }
   }
 }
