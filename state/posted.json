@@ -1157,6 +1157,12 @@
       "category": "news",
       "posted_at": "2026-08-28T05:27:49.279798+00:00",
       "message_count": 17
+    },
+    "reports/news/2026-08-29.md": {
+      "sha256": "a9c2b7fa057eca12bc19ab745753d5cce2dfa2fe8a6f501b4e400b71752f450d",
+      "category": "news",
+      "posted_at": "2026-08-29T05:13:26.730603+00:00",
+      "message_count": 17
     }
   }
 }
