@@ -1193,6 +1193,12 @@
       "category": "news",
       "posted_at": "2026-08-31T05:36:06.555093+00:00",
       "message_count": 17
+    },
+    "reports/news/2026-09-01.md": {
+      "sha256": "bce87b0889765cfb14bd253ee4252d0337ce492f9de197f5cd205b340ce69229",
+      "category": "news",
+      "posted_at": "2026-09-01T05:27:18.460279+00:00",
+      "message_count": 17
     }
   }
 }
