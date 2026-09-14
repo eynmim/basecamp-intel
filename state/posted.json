@@ -1331,6 +1331,12 @@
       "category": "opportunities",
       "posted_at": "2026-09-13T05:17:30.581379+00:00",
       "message_count": 30
+    },
+    "reports/news/2026-09-14.md": {
+      "sha256": "9ef2ed52f9bd223072f20cf052c2adf477a599a51aee08a2b1cc9dfc8a399b57",
+      "category": "news",
+      "posted_at": "2026-09-14T05:19:49.463675+00:00",
+      "message_count": 17
     }
   }
 }
