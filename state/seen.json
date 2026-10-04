@@ -1,0 +1,28 @@
+{
+  "events": {
+    "https://zephyrproject.org/event/zephyr-developer-summit-2026": {
+      "first_seen": "2026-10-04",
+      "deadline_history": [],
+      "title": "Zephyr Developer Summit 2026",
+      "deadline": null,
+      "last_sent": "2026-10-04",
+      "message_id": 6455
+    },
+    "https://makerfairerome.eu/en/overview": {
+      "first_seen": "2026-10-04",
+      "deadline_history": [],
+      "title": "Maker Faire Rome 2026",
+      "deadline": null,
+      "last_sent": "2026-10-04",
+      "message_id": 6456
+    },
+    "https://developer.espressif.com/events/devcon26": {
+      "first_seen": "2026-10-04",
+      "deadline_history": [],
+      "title": "Espressif DevCon26",
+      "deadline": null,
+      "last_sent": "2026-10-04",
+      "message_id": 6457
+    }
+  }
+}
