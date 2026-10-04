@@ -14,6 +14,8 @@
 //                               LinkedIn slot. Fully automated path — no
 //                               Buffer UI needed.
 //   @Chavosh2_Bot <question>  → same as /ask but via mention
+//   country buttons under a pinned board → show only that country's lines,
+//                               grouped by city (no LLM call)
 //
 // "Reply-to" shortcut: if the user *replies* to another message and uses
 // /fa, /translate, /ask, or /keep with no inline text, the replied message
@@ -31,6 +33,8 @@
 const TG = "https://api.telegram.org";
 const BUFFER_API = "https://api.bufferapp.com/1";
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models";
+// Written by .github/scripts/post_to_telegram.py on every report run.
+const FILTERS_URL = "https://raw.githubusercontent.com/eynmim/basecamp-intel/main/state/filters.json";
 // Different accounts have different model availability. We try in
 // preference order; the first one whose generateContent call returns
 // 200 wins. If all fail, askGemini() lists what the API key CAN see
@@ -95,6 +99,10 @@ export default {
       update = await req.json();
     } catch {
       return new Response("bad json", { status: 400 });
+    }
+
+    if (update.callback_query) {
+      return await handleLocationFilter(env, update.callback_query);
     }
 
     const m = update.message || update.edited_message;
@@ -448,6 +456,73 @@ async function handleSchedule(env, m) {
     await tgSend(env, m, `❌ Buffer error: ${e.message}`);
   }
   return new Response("ok");
+}
+
+// Country button under a pinned board ("loc:<category>:<country>:<stamp>"):
+// swap the board for that country's lines, grouped by city, in the same
+// message. "ALL" puts the full board back; so does the next report run.
+// Only a button present in the current filters.json is acted on: the stamp
+// changes every run, so a stale cached copy (or a forged update) edits nothing.
+async function handleLocationFilter(env, q) {
+  const category = /^loc:(\w+):/.exec(q.data || "")?.[1];
+  const msg = q.message;
+  let data = null;
+  if (category && msg) {
+    try {
+      const r = await fetch(FILTERS_URL, { cf: { cacheTtl: 60 } });
+      if (r.ok) data = await r.json();
+    } catch (e) {
+      console.log("filters.json fetch failed:", e.message);
+    }
+  }
+  const cat = data && Object.hasOwn(data, category) ? data[category] : null;
+  const button = cat?.keyboard.flat().find((b) => b.callback_data === q.data);
+  if (!button) {
+    await tg(env, "answerCallbackQuery", {
+      callback_query_id: q.id,
+      text: "This board was just updated. Try again in a few minutes.",
+    });
+    return new Response("ok");
+  }
+
+  // "loc:<category>:" + country + ":" + 6-char stamp
+  const country = q.data.slice(`loc:${category}:`.length, -7);
+  let text = cat.board;
+  if (country !== "ALL") {
+    const lines = cat.lines.filter((l) => l.country === country);
+    const byCity = new Map();
+    for (const l of lines) {
+      if (!byCity.has(l.city)) byCity.set(l.city, []);
+      byCity.get(l.city).push(l.html);
+    }
+    const parts = [
+      `${cat.board.split("\n")[0]}\n<b>${escapeHtml(button.text)}</b> · ${lines.length} of ${cat.lines.length}`,
+    ];
+    for (const [city, html] of byCity) {
+      parts.push(`<b>${city ? escapeHtml(city) : "City not given"}</b>\n${html.join("\n")}`);
+    }
+    parts.push("<i>Tap 📋 All to see everything again.</i>");
+    text = parts.join("\n\n");
+  }
+
+  const r = await tg(env, "editMessageText", {
+    chat_id: msg.chat.id,
+    message_id: msg.message_id,
+    text,
+    parse_mode: "HTML",
+    disable_web_page_preview: true,
+    reply_markup: { inline_keyboard: cat.keyboard },
+  });
+  const failed = !r.ok && !/not modified/i.test(r.description || "");
+  await tg(env, "answerCallbackQuery", {
+    callback_query_id: q.id,
+    ...(failed && { text: "Couldn't apply the filter." }),
+  });
+  return new Response("ok");
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 async function tg(env, method, payload) {

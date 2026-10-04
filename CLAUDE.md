@@ -217,6 +217,10 @@ but break these and the feed degrades:
   README §Hashtag taxonomy. Do not invent tags without updating that table.
 - Every numbered item carries a primary link; it is the item's identity for
   duplicate suppression (§5). An item with no link can never be deduplicated.
+- In `opportunities` and `events`, every numbered item carries a
+  `Location:` line (`Turin, Italy`, `Germany`, `Online`, `EU-wide`,
+  `Global`; English country names). It feeds the country buttons under the
+  pinned board; an item without one lands under "Unknown".
 - Keep the deadline board under ~2 KB. Past 3000 chars the Action trims it
   from the bottom and appends a "+N more" line; past 3500 the validator
   aborts the entire run. It reached 2906 in June 2026.

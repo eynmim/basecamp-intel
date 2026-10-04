@@ -72,6 +72,12 @@ Inside each item / section, use Telegram-flavoured HTML directly — `<b>`,
 Escape `&` as `&amp;` and `<` as `&lt;` in plain-text content. Keep each
 numbered item under 3500 chars.
 
+In categories with a pinned board, every numbered item carries a
+`Location:` line — `Turin, Italy`, `Germany`, `Online`, `EU-wide` or
+`Global`, country names in English. The Action reads it to put country
+buttons under the board (the last comma-separated part is the country, the
+one before it the city). An item without it is filed under "Unknown".
+
 The script runs `validate_report()` before sending and **aborts the workflow
 on schema drift** (missing title, unwrapped numbered items, unbalanced tags,
 oversized items). The `if: failure()` step then posts an alert to the same
@@ -566,7 +572,8 @@ GitHub Action validates and aborts on drift):
 <b>═ 🎤 CONFERENCES &amp; EXPOS ═</b>
 
 <b>1. Event name</b>
-Type: Conference | Organiser | City, Country (or Online)
+Type: Conference | Organiser
+Location: Milan, Italy   (or: Germany / Online / EU-wide / Global)
 📅 Date: 03–04 Nov 2026 | Format: in person / online / hybrid
 Registration deadline: 20 Oct 2026   (or: unconfirmed / none, free entry)
 Cost: free / €X (student rate if any)
@@ -605,6 +612,9 @@ RULES:
 - Put any registration / application / submission closing date on a line
   containing the word "deadline" or "due". Do not put the event's own
   date on such a line.
+- Every item has a "Location:" line: "City, Country", "Country",
+  "Online", "EU-wide" or "Global", country names in English. It drives
+  the country filter buttons under the pinned calendar.
 - End each item with a tag line of 3–5 tags. Allowed tags ONLY:
     Type:    #conference #hackathon #competition #startup #meetup
              #workshop #webinar

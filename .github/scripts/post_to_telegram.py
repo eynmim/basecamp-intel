@@ -36,6 +36,9 @@ STATE_DIR = Path("state")
 POSTED_LEDGER = STATE_DIR / "posted.json"
 PINNED_STATE = STATE_DIR / "pinned.json"
 SEEN_LEDGER = STATE_DIR / "seen.json"
+# Board lines tagged with their item's location, read by the Worker when a
+# country button under a pinned board is tapped.
+FILTER_INDEX = STATE_DIR / "filters.json"
 TOPICS_CONFIG = Path(".github/topics.json")
 
 # Section header line, e.g. <b>═ PORTFOLIO SNAPSHOT ═</b>
@@ -73,6 +76,32 @@ BOARD_LIMIT = 3000
 # Mark the deadline-board section so we know which message to pin/edit.
 # Events use the same mechanism under a calendar heading.
 DEADLINE_BOARD_RE = re.compile(r"(?m)^<b>═[^<]*(?:ACTIVE DEADLINES|EVENT CALENDAR)[^<]*═</b>\s*$")
+
+# "Location: Turin, Italy" — where the position or event is. The last
+# comma-separated part is the country, the one before it the city.
+LOCATION_RE = re.compile(r"(?m)^Location:\s*(.+?)\s*$")
+FLAGS = {
+    "Italy": "🇮🇹", "Germany": "🇩🇪", "Netherlands": "🇳🇱", "Sweden": "🇸🇪",
+    "Finland": "🇫🇮", "France": "🇫🇷", "Spain": "🇪🇸", "Belgium": "🇧🇪",
+    "Austria": "🇦🇹", "Switzerland": "🇨🇭", "Denmark": "🇩🇰", "Norway": "🇳🇴",
+    "Czechia": "🇨🇿", "Poland": "🇵🇱", "Portugal": "🇵🇹", "Ireland": "🇮🇪",
+    "Greece": "🇬🇷", "Estonia": "🇪🇪", "Luxembourg": "🇱🇺", "Slovenia": "🇸🇮",
+    "United Kingdom": "🇬🇧", "United States": "🇺🇸", "Canada": "🇨🇦",
+    "Japan": "🇯🇵", "South Korea": "🇰🇷", "Singapore": "🇸🇬",
+    "United Arab Emirates": "🇦🇪", "Iran": "🇮🇷",
+    "EU-wide": "🇪🇺", "Online": "💻", "Global": "🌍", "Unknown": "❔",
+}
+COUNTRY_ALIASES = {
+    "uk": "United Kingdom", "england": "United Kingdom", "great britain": "United Kingdom",
+    "us": "United States", "usa": "United States", "czech republic": "Czechia",
+    "the netherlands": "Netherlands", "holland": "Netherlands", "korea": "South Korea",
+    "uae": "United Arab Emirates", "eu": "EU-wide", "europe": "EU-wide",
+    "europe-wide": "EU-wide", "virtual": "Online", "remote": "Global",
+    "worldwide": "Global", "international": "Global",
+    **{name.lower(): name for name in FLAGS},
+}
+# Tail of the button row, after the real countries, in this order.
+FILTER_TAIL = ["EU-wide", "Online", "Global", "Unknown"]
 
 
 def die(msg: str) -> None:
@@ -241,7 +270,9 @@ def telegram_call(token: str, method: str, payload: dict, *, attempt: int = 1) -
     return data
 
 
-def send_message(token: str, chat_id: str, text: str, thread_id: int | None = None) -> int:
+def send_message(
+    token: str, chat_id: str, text: str, thread_id: int | None = None, reply_markup: dict | None = None
+) -> int:
     """Send a message to a chat (or a topic if thread_id is set); return new message_id."""
     payload = {
         "chat_id": chat_id,
@@ -251,21 +282,32 @@ def send_message(token: str, chat_id: str, text: str, thread_id: int | None = No
     }
     if thread_id is not None:
         payload["message_thread_id"] = thread_id
+    if reply_markup:
+        payload["reply_markup"] = reply_markup
     data = telegram_call(token, "sendMessage", payload)
     if not data.get("ok"):
         die(f"sendMessage failed: {data.get('description', '<no description>')}")
     return data["result"]["message_id"]
 
 
-def edit_message(token: str, chat_id: str, message_id: int, text: str) -> bool:
-    """Edit an existing message. Return True on success, False if it can't be edited."""
-    data = telegram_call(token, "editMessageText", {
+def edit_message(
+    token: str, chat_id: str, message_id: int, text: str, reply_markup: dict | None = None
+) -> bool:
+    """Edit an existing message. Return True on success, False if it can't be edited.
+
+    An edit without reply_markup strips the message's buttons, so the board
+    passes its keyboard on every edit.
+    """
+    payload = {
         "chat_id": chat_id,
         "message_id": message_id,
         "text": text,
         "parse_mode": "HTML",
         "disable_web_page_preview": True,
-    })
+    }
+    if reply_markup:
+        payload["reply_markup"] = reply_markup
+    data = telegram_call(token, "editMessageText", payload)
     if data.get("ok"):
         return True
     desc = (data.get("description") or "").lower()
@@ -601,6 +643,80 @@ def cap_board(board: str, limit: int = BOARD_LIMIT) -> str:
     return "\n".join(lines)
 
 
+# --------------------------------------------------------------------------
+# Location filter
+#
+# Each pinned board carries one button per country. Tapping one makes the
+# Worker swap the board for that country's lines, grouped by city; the next
+# run puts the full board back. The Worker has no storage of its own, so this
+# run publishes what it needs in state/filters.json.
+# --------------------------------------------------------------------------
+
+
+def item_location(msg: str) -> tuple[str, str]:
+    """(city, country) from the item's Location: line, as plain text."""
+    match = LOCATION_RE.search(msg)
+    if not match:
+        return "", "Unknown"
+    text = html.unescape(re.sub(r"<[^>]+>", "", match.group(1)))
+    # "Milan, Italy (hybrid)" is still Italy; a stray remark must not make
+    # its own country button.
+    text = re.sub(r"\([^)]*\)", "", text)
+    parts = [p.strip() for p in text.split(",") if p.strip()]
+    if not parts:
+        return "", "Unknown"
+    country = COUNTRY_ALIASES.get(parts[-1].lower(), parts[-1])
+    # Telegram caps callback_data at 64 bytes, not characters:
+    # "loc:opportunities:" + country + ":" + 6-char stamp.
+    country = country.encode()[:36].decode(errors="ignore").strip()
+    city = parts[-2] if len(parts) > 1 else ""
+    return city, country
+
+
+def build_location_filter(
+    board: str, linked: str, locations: dict, category: str, stamp: str
+) -> tuple[list[dict], list[list[dict]]]:
+    """Tag each board line with its item's location; build the country keyboard.
+
+    `board` and `linked` are the same board before and after its arrows were
+    repointed at Telegram messages. Lines correspond one to one, so the raw
+    line gives the item URL and the linked line is what gets displayed.
+
+    Every button carries `stamp`, a hash of this run's board. The Worker only
+    acts on a button it finds in filters.json, so a copy of filters.json that
+    is older than the board (the commit lands after the send, and GitHub's raw
+    CDN caches for minutes) cannot overwrite the board with stale content.
+    """
+    lines = []
+    for raw_line, shown in zip(board.split("\n"), linked.split("\n")):
+        match = BOARD_LINK_RE.search(raw_line)
+        if not match:
+            continue  # heading, blank line or note
+        city, country = locations.get(match.group(1).split("#")[0].rstrip("/"), ("", "Unknown"))
+        lines.append({"html": shown, "city": city, "country": country})
+    if not lines:
+        return [], []
+
+    counts: dict[str, int] = {}
+    for line in lines:
+        counts[line["country"]] = counts.get(line["country"], 0) + 1
+
+    def order(country: str) -> tuple:
+        if country == "Italy":
+            return (0, 0, "")
+        if country in FILTER_TAIL:
+            return (2, FILTER_TAIL.index(country), "")
+        return (1, -counts[country], country)
+
+    buttons = [
+        {"text": f"{FLAGS.get(c, '🌐')} {c} ({counts[c]})", "callback_data": f"loc:{category}:{c}:{stamp}"}
+        for c in sorted(counts, key=order)
+    ]
+    keyboard = [buttons[i:i + 3] for i in range(0, len(buttons), 3)]
+    keyboard.append([{"text": "📋 All", "callback_data": f"loc:{category}:ALL:{stamp}"}])
+    return lines, keyboard
+
+
 def main() -> None:
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
     chat_id = os.environ.get("TELEGRAM_CHANNEL_ID", "").strip()
@@ -662,6 +778,15 @@ def main() -> None:
     if not messages:
         die(f"After splitting, no messages to send from {report_file}.")
 
+    # Locations of every item in the report, taken before dedup: suppressed
+    # items are still on the board, and the filter has to cover them too.
+    locations = {}
+    for msg in messages:
+        _, item = split_item(msg)
+        url = item_url(item) if item else None
+        if url:
+            locations[url] = item_location(item)
+
     # --- Duplicate suppression -------------------------------------------
     # Weekly rhythm: one full re-send on refresh day, new-only the rest of
     # the week. Rome time, because that's the clock the scouts date against.
@@ -702,16 +827,34 @@ def main() -> None:
 
     # Point the pinned board's arrows at the original messages, and cap its
     # size so a busy week can't push it past the validator's 3500-char abort.
+    board_markup: dict | None = None
     if has_board:
         rebuilt = []
         for msg in messages:
             if DEADLINE_BOARD_RE.search(msg):
+                raw_board = msg
                 msg, linked = link_board_to_messages(msg, seen, chat_id, thread_id)
+                full_board = msg
                 before = len(msg)
                 msg = cap_board(msg)
+                stamp = hashlib.sha256(msg.encode()).hexdigest()[:6]
+                lines, keyboard = build_location_filter(raw_board, full_board, locations, category, stamp)
                 print(f"  Deadline board: {linked} entr(ies) deep-linked to their "
                       f"original message; {before} chars"
                       + (f" -> {len(msg)} (trimmed)" if len(msg) != before else ""))
+                if keyboard:
+                    board_markup = {"inline_keyboard": keyboard}
+                    filters = load_json(FILTER_INDEX, {})
+                    filters[category] = {
+                        "updated": today_rome.isoformat(),
+                        "label": label,
+                        "board": msg,
+                        "keyboard": keyboard,
+                        "lines": lines,
+                    }
+                    save_json(FILTER_INDEX, filters)
+                    print(f"  Location filter: {len(lines)} board line(s) across "
+                          f"{sum(len(row) for row in keyboard) - 1} location button(s).")
             rebuilt.append(msg)
         messages = rebuilt
 
@@ -769,7 +912,7 @@ def main() -> None:
 
             if is_deadline_board and j == 0 and pin_state.get("message_id"):
                 # Try to update the existing pinned deadline message in this topic.
-                if edit_message(token, chat_id, pin_state["message_id"], chunk):
+                if edit_message(token, chat_id, pin_state["message_id"], chunk, reply_markup=board_markup):
                     print(f"    edited existing pinned message {pin_state['message_id']}.")
                     pin_message(token, chat_id, pin_state["message_id"])  # re-pin if user unpinned
                     # Stamp the edit too, not just send+pin — otherwise
@@ -783,7 +926,10 @@ def main() -> None:
                     continue
                 print("    pinned message gone; sending fresh.")
 
-            mid = send_message(token, chat_id, chunk, thread_id=thread_id)
+            mid = send_message(
+                token, chat_id, chunk, thread_id=thread_id,
+                reply_markup=board_markup if is_deadline_board and j == 0 else None,
+            )
             sent += 1
 
             # Remember where this opportunity landed, so the deadline board
