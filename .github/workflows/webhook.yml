@@ -1,0 +1,45 @@
+name: Telegram webhook
+
+# Maintenance: show how the bot's webhook is registered and, with `apply`,
+# re-register the same URL so it also receives button taps (callback_query).
+# Without callback_query, Telegram silently drops taps on the country
+# buttons under the pinned boards.
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: 'Re-register the current webhook URL with message, edited_message and callback_query updates.'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  webhook:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect (and optionally fix) the webhook
+        env:
+          TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          APPLY: ${{ inputs.apply }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          api="https://api.telegram.org/bot${TOKEN}"
+          info=$(curl -sS "$api/getWebhookInfo")
+          url=$(jq -r '.result.url // ""' <<<"$info")
+          # This repo and its run logs are public; keep the Worker URL out of them.
+          if [ -n "$url" ]; then echo "::add-mask::$url"; fi
+          jq '.result | {url_set: (.url != ""), allowed_updates, pending_update_count, last_error_date, last_error_message}' <<<"$info"
+
+          if [ "$APPLY" = "true" ]; then
+            if [ -z "$url" ]; then
+              echo "::error::No webhook URL is registered; there is nothing to re-register."
+              exit 1
+            fi
+            body=$(jq -n --arg url "$url" '{url: $url, allowed_updates: ["message", "edited_message", "callback_query"]}')
+            curl -sS "$api/setWebhook" -H 'content-type: application/json' -d "$body" | jq '{ok, description}'
+            curl -sS "$api/getWebhookInfo" | jq '.result | {allowed_updates, pending_update_count, last_error_message}'
+          fi
