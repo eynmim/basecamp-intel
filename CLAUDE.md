@@ -56,7 +56,6 @@ accurate; a stale profile is the single biggest cause of irrelevant results.
 | Residence | Italian *Permesso di Soggiorno* (study) → Schengen mobility |
 | GitHub | [eynmim](https://github.com/eynmim) |
 | Portfolio | eynmim.github.io |
-| Contact | mansouriali955@gmail.com · +39 350 9738344 |
 
 ### Education
 
