@@ -49,6 +49,30 @@
       "deadline": "2026-11-30",
       "last_sent": "2026-10-04",
       "message_id": 6461
+    },
+    "https://turismotorino.org/en/visit/events/wave-by-vento": {
+      "first_seen": "2026-10-04",
+      "deadline_history": [],
+      "title": "Wave by Vento (formerly Italian Tech Week) 2026",
+      "deadline": null,
+      "last_sent": "2026-10-04",
+      "message_id": 6463
+    },
+    "https://www.nxp.com/company/about-nxp/events/nxp-technology-days:NXP-TECH-DAYS": {
+      "first_seen": "2026-10-04",
+      "deadline_history": [],
+      "title": "NXP Technology Days Milan 2026",
+      "deadline": null,
+      "last_sent": "2026-10-04",
+      "message_id": 6464
+    },
+    "https://sessionize.com/italian-embedded-monthly-meetups": {
+      "first_seen": "2026-10-04",
+      "deadline_history": [],
+      "title": "Italian Embedded Community monthly meetup",
+      "deadline": null,
+      "last_sent": "2026-10-04",
+      "message_id": 6465
     }
   }
 }

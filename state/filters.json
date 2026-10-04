@@ -1,0 +1,86 @@
+{
+  "events": {
+    "updated": "2026-10-04",
+    "label": "📅 Events",
+    "board": "<b>═ 📅 EVENT CALENDAR ═</b>\n\n✈️ <b>07–09 Oct</b> — Zephyr Developer Summit, Prague <a href=\"https://t.me/c/3957539319/6450/6455\">→</a>\n📍 <b>07–09 Oct</b> — Wave by Vento (ex Italian Tech Week), Turin <a href=\"https://turismotorino.org/en/visit/events/wave-by-vento\">→</a>\n✈️ <b>12 Oct–03 Dec</b> — Nordic Tech Tour EMEA (Milan stop unconfirmed) <a href=\"https://t.me/c/3957539319/6450/6459\">→</a>\n📍 <b>21 Oct</b> — NXP Technology Days, Milan <a href=\"https://www.nxp.com/company/about-nxp/events/nxp-technology-days:NXP-TECH-DAYS\">→</a>\n📍 <b>23–25 Oct</b> — Maker Faire Rome <a href=\"https://t.me/c/3957539319/6450/6456\">→</a>\n📍 <b>03–04 Nov</b> — Espressif DevCon26, Milan <a href=\"https://t.me/c/3957539319/6450/6457\">→</a>\n🚀 <b>30 Nov</b> — STM32Cube Innovation Challenge · ideas due <a href=\"https://t.me/c/3957539319/6450/6461\">→</a>\n📍 <b>Monthly</b> — Italian Embedded meetup, Milan (dates unconfirmed) <a href=\"https://sessionize.com/italian-embedded-monthly-meetups\">→</a>\n✈️ <b>30–31 Jan</b> — FOSDEM 2027, Brussels <a href=\"https://t.me/c/3957539319/6450/6460\">→</a>",
+    "keyboard": [
+      [
+        {
+          "text": "🇮🇹 Italy (5)",
+          "callback_data": "loc:events:Italy:bd5beb"
+        },
+        {
+          "text": "🇧🇪 Belgium (1)",
+          "callback_data": "loc:events:Belgium:bd5beb"
+        },
+        {
+          "text": "🇨🇿 Czechia (1)",
+          "callback_data": "loc:events:Czechia:bd5beb"
+        }
+      ],
+      [
+        {
+          "text": "🇪🇺 EU-wide (1)",
+          "callback_data": "loc:events:EU-wide:bd5beb"
+        },
+        {
+          "text": "💻 Online (1)",
+          "callback_data": "loc:events:Online:bd5beb"
+        }
+      ],
+      [
+        {
+          "text": "📋 All",
+          "callback_data": "loc:events:ALL:bd5beb"
+        }
+      ]
+    ],
+    "lines": [
+      {
+        "html": "✈️ <b>07–09 Oct</b> — Zephyr Developer Summit, Prague <a href=\"https://t.me/c/3957539319/6450/6455\">→</a>",
+        "city": "",
+        "country": "Czechia"
+      },
+      {
+        "html": "📍 <b>07–09 Oct</b> — Wave by Vento (ex Italian Tech Week), Turin <a href=\"https://turismotorino.org/en/visit/events/wave-by-vento\">→</a>",
+        "city": "Turin",
+        "country": "Italy"
+      },
+      {
+        "html": "✈️ <b>12 Oct–03 Dec</b> — Nordic Tech Tour EMEA (Milan stop unconfirmed) <a href=\"https://t.me/c/3957539319/6450/6459\">→</a>",
+        "city": "",
+        "country": "EU-wide"
+      },
+      {
+        "html": "📍 <b>21 Oct</b> — NXP Technology Days, Milan <a href=\"https://www.nxp.com/company/about-nxp/events/nxp-technology-days:NXP-TECH-DAYS\">→</a>",
+        "city": "Milan",
+        "country": "Italy"
+      },
+      {
+        "html": "📍 <b>23–25 Oct</b> — Maker Faire Rome <a href=\"https://t.me/c/3957539319/6450/6456\">→</a>",
+        "city": "Rome",
+        "country": "Italy"
+      },
+      {
+        "html": "📍 <b>03–04 Nov</b> — Espressif DevCon26, Milan <a href=\"https://t.me/c/3957539319/6450/6457\">→</a>",
+        "city": "Milan",
+        "country": "Italy"
+      },
+      {
+        "html": "🚀 <b>30 Nov</b> — STM32Cube Innovation Challenge · ideas due <a href=\"https://t.me/c/3957539319/6450/6461\">→</a>",
+        "city": "",
+        "country": "Online"
+      },
+      {
+        "html": "📍 <b>Monthly</b> — Italian Embedded meetup, Milan (dates unconfirmed) <a href=\"https://sessionize.com/italian-embedded-monthly-meetups\">→</a>",
+        "city": "Milan",
+        "country": "Italy"
+      },
+      {
+        "html": "✈️ <b>30–31 Jan</b> — FOSDEM 2027, Brussels <a href=\"https://t.me/c/3957539319/6450/6460\">→</a>",
+        "city": "",
+        "country": "Belgium"
+      }
+    ]
+  }
+}
