@@ -510,6 +510,18 @@ whose registration or submission closes within that window.
     IoT, robotics, hardware startups); hands-on vendor workshops;
     technical webinars from ST, Espressif, Nordic, NXP, TI, Arm, Zephyr.
 
+How to search:
+- Start from what is already known: the newest file in reports/events/
+  and the newest Opportunities report (reports/YYYY-MM-DD.md). Re-check
+  every event they list that is still upcoming.
+- Then run at least 3 searches per category [A]–[D], 12 or more in
+  total, including Italian queries for Turin and Milan ("evento
+  embedded Torino", "hackathon Torino 2026", "meetup IoT Milano").
+- Some official sites are blocked by the sandbox network. When a page
+  will not open, confirm the facts from search results on the official
+  domain and still link the official page. Never drop an event only
+  because its page would not open.
+
 Geography: in person in Italy, Turin and Milan first; elsewhere in the
 EU only when worth the trip (major conference, funded travel, real
 prize); online anywhere. Outside the EU only if travel is funded.
@@ -527,7 +539,7 @@ research grants (Opportunities), news (News), or courses (Education).
 
 List EVERY qualifying upcoming event each run, including ones from last
 week. The Action delivers only the new ones; you do not deduplicate.
-Better 6 events he would actually attend than 20 he will scroll past.
+Aim for 6–12 events he would actually attend, not 20 he will scroll past.
 
 ═══════════════════════════════════════════════
 STEP 2 — WRITE reports/events/$TODAY.md
