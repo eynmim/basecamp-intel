@@ -23,6 +23,32 @@
       "deadline": null,
       "last_sent": "2026-10-04",
       "message_id": 6457
+    },
+    "https://www.nordicsemi.com/Events/2026/Nordic-Tech-Tour-EMEA-2026": {
+      "first_seen": "2026-10-04",
+      "deadline_history": [],
+      "title": "Nordic Tech Tour EMEA 2026",
+      "deadline": null,
+      "last_sent": "2026-10-04",
+      "message_id": 6459
+    },
+    "https://fosdem.org/2027": {
+      "first_seen": "2026-10-04",
+      "deadline_history": [],
+      "title": "FOSDEM 2027",
+      "deadline": null,
+      "last_sent": "2026-10-04",
+      "message_id": 6460
+    },
+    "https://www.elektormagazine.com/stm32cube-innovation-challenge": {
+      "first_seen": "2026-10-04",
+      "deadline_history": [
+        "2026-11-30"
+      ],
+      "title": "STM32Cube Innovation Challenge: Design with STM32C5",
+      "deadline": "2026-11-30",
+      "last_sent": "2026-10-04",
+      "message_id": 6461
     }
   }
 }
