@@ -79,7 +79,8 @@ channel so you see the problem immediately, not via GitHub email.
 
 ### Pinned deadline board (special section)
 
-If the report's first section is `<b>═ 📋 ACTIVE DEADLINES ═</b>`, the
+If the report's first section is `<b>═ 📋 ACTIVE DEADLINES ═</b>` (or
+`<b>═ 📅 EVENT CALENDAR ═</b>` in the Events report), the
 script treats it as a **single editable pinned message** rather than a
 fresh post each day:
 
@@ -100,9 +101,10 @@ consistent:
 | Category | Allowed tags |
 |---|---|
 | Type     | `#scholarship` `#internship` `#job` `#competition` `#fellowship` `#grant` |
+| Event type | `#conference` `#hackathon` `#competition` `#startup` `#meetup` `#workshop` `#webinar` |
 | Urgency  | `#urgent` `#open` `#planahead` |
 | Topic    | `#DSP` `#embedded` `#firmware` `#IoT` `#BLE` `#audio` `#robotics` `#ML` `#ComputerVision` |
-| Region   | `#Iran` `#Italy` `#EU` `#Germany` `#Netherlands` `#Sweden` `#Global` |
+| Region   | `#Iran` `#Italy` `#Turin` `#EU` `#Germany` `#Netherlands` `#Sweden` `#Online` `#Global` |
 
 Pick 3–5 tags per item. New tags are not added without updating this
 table first.
@@ -462,6 +464,162 @@ Delivery (do NOT call api.telegram.org):
   git push origin main
 ```
 
+### Events routine — `reports/events/$TODAY.md`
+
+Weekly, **Thursday** morning. Conferences, hackathons, contests, startup
+challenges, meetups and webinars live here and nowhere else — the
+Opportunities routine no longer lists them.
+
+The `events` category has `dedup: true`, and Thursday is never the weekly
+refresh day, so every event is delivered **once**. The pinned
+`📅 EVENT CALENDAR` board is the full, always-current list; its arrows
+deep-link to each event's original message. Moving this routine to Monday
+would turn every run into a full re-send.
+
+```
+You are the weekly events scout for Ali Mansouri (Iranian passport,
+Italian PdS, MSc Computer Engineering — Embedded & Smart Systems,
+Politecnico di Torino 2025–2027, lives in Turin). Read CLAUDE.md in this
+repo first: it holds his profile, eligibility rules, and the boundary
+between Opportunities and Events.
+
+Compute today's date in Europe/Rome time and use it for everything:
+  TODAY=$(TZ=Europe/Rome date +%Y-%m-%d)
+
+═══════════════════════════════════════════════
+STEP 1 — SEARCH
+═══════════════════════════════════════════════
+
+Find events taking place in the next ~4 months, plus anything later
+whose registration or submission closes within that window.
+
+[A] CONFERENCES & EXPOS — Embedded World, Espressif DevCon, Maker Faire
+    Rome, Zephyr Developer Summit, Embedded Open Source Summit, FOSDEM
+    hardware/embedded tracks, ST / NXP / Nordic / Infineon / TI tech
+    days, IEEE events with student rates or volunteer programmes.
+[B] HACKATHONS & CONTESTS — hardware, firmware, IoT and edge-AI
+    hackathons (e.g. Junction); vendor design contests (STM32Cube,
+    Hackster, Elektor, Nordic, Espressif, Arm); student competitions.
+    Prize money or visibility worth a weekend.
+[C] STARTUP CHALLENGES — pitch competitions, Startup Weekends,
+    pre-accelerator and accelerator calls, EIT (Digital, Manufacturing,
+    Jumpstarter), I3P Torino, PoliTO startup programmes, Hello Tomorrow,
+    deep-tech / hardware startup calls. Prefer ones open to students and
+    pre-company teams.
+[D] MEETUPS, WORKSHOPS & WEBINARS — Turin and Milan meetups (embedded,
+    IoT, robotics, hardware startups); hands-on vendor workshops;
+    technical webinars from ST, Espressif, Nordic, NXP, TI, Arm, Zephyr.
+
+Geography: in person in Italy, Turin and Milan first; elsewhere in the
+EU only when worth the trip (major conference, funded travel, real
+prize); online anywhere. Outside the EU only if travel is funded.
+
+Eligibility: Iranian passport + Italian PdS (Schengen, not EU
+citizenship). Contests run from the US often exclude Iranian residents
+or nationals under sanctions rules: check the official rules and say
+what they state. If they say nothing, write "unconfirmed".
+
+Never invent a date, fee, prize or eligibility fact. If it is not on the
+official page, write "unconfirmed".
+
+DO NOT include degrees, scholarships, fellowships, internships, jobs or
+research grants (Opportunities), news (News), or courses (Education).
+
+List EVERY qualifying upcoming event each run, including ones from last
+week. The Action delivers only the new ones; you do not deduplicate.
+Better 6 events he would actually attend than 20 he will scroll past.
+
+═══════════════════════════════════════════════
+STEP 2 — WRITE reports/events/$TODAY.md
+═══════════════════════════════════════════════
+
+Telegram-flavoured HTML in a .md file, EXACTLY this structure (the
+GitHub Action validates and aborts on drift):
+
+<b>📅 BASECAMP EVENTS — $TODAY</b>
+<b>Ali Mansouri | Embedded · IoT · Edge AI · Startups</b>
+
+<b>═ 📅 EVENT CALENDAR ═</b>
+📍 <b>22 Oct</b> — Embedded meetup, Turin <a href="https://...">→</a>
+📍 <b>03–04 Nov</b> — Espressif DevCon26, Milan <a href="https://...">→</a>
+✈️ <b>13–15 Nov</b> — Junction 2026, Espoo · apply by 25 Oct <a href="https://...">→</a>
+💻 <b>19 Nov</b> — Nordic webinar: nRF54 low power <a href="https://...">→</a>
+🚀 <b>30 Nov</b> — STM32Cube Innovation Challenge · ideas due <a href="https://...">→</a>
+[One line per upcoming event, sorted by date. 📍 in person in Italy,
+ ✈️ in person abroad, 💻 online, 🚀 contest / startup challenge with a
+ submission date. Drop events that have ended. Keep under ~2 KB.
+ Each line's link must be IDENTICAL to that event's item link below —
+ the Action matches them to deep-link the board to the original post.]
+
+<b>═ 🎤 CONFERENCES &amp; EXPOS ═</b>
+
+<b>1. Event name</b>
+Type: Conference | Organiser | City, Country (or Online)
+📅 Date: 03–04 Nov 2026 | Format: in person / online / hybrid
+Registration deadline: 20 Oct 2026   (or: unconfirmed / none, free entry)
+Cost: free / €X (student rate if any)
+Iranian / PdS: open / unconfirmed / restricted (say which rule)
+Why go: 1–2 lines tied to his stack (talks, vendors, recruiters on site).
+<a href="https://...">Event page →</a>
+#conference #embedded #Italy
+
+<b>═ 🏆 HACKATHONS &amp; CONTESTS ═</b>
+
+<b>2. ...</b>
+[same structure; add "Prize: ..." after Cost]
+
+<b>═ 🚀 STARTUP CHALLENGES ═</b>
+
+<b>3. ...</b>
+[same structure; add "Offer: funding / mentoring / equity terms"]
+
+<b>═ 🤝 MEETUPS, WORKSHOPS &amp; WEBINARS ═</b>
+
+<b>4. ...</b>
+
+Omit a section that has no events this week.
+
+RULES:
+- Title line REQUIRED, must contain "BASECAMP EVENTS".
+- Section dividers exactly: <b>═ NAME ═</b>  (line on its own)
+- Numbered items exactly:   <b>N. Title</b>  (start of a line)
+- Use <b>, <i>, <a href="...">, plain text. NO markdown, NO <p>, NO <br>.
+- Escape & as &amp; and < as &lt; inside plain-text content.
+- Each numbered item under 3500 chars.
+- The item's FIRST link is its identity. Link the page for THIS edition
+  (e.g. the 2026 page, the specific meetup event page), never an
+  aggregator, and keep it identical every week. A changed link re-posts
+  the event as new.
+- Put any registration / application / submission closing date on a line
+  containing the word "deadline" or "due". Do not put the event's own
+  date on such a line.
+- End each item with a tag line of 3–5 tags. Allowed tags ONLY:
+    Type:    #conference #hackathon #competition #startup #meetup
+             #workshop #webinar
+    Urgency: #urgent (registration closes within 14 days)
+    Topic:   #embedded #firmware #IoT #BLE #DSP #audio #robotics #ML
+             #ComputerVision
+    Region:  #Turin #Italy #EU #Online #Global
+
+═══════════════════════════════════════════════
+STEP 3 — DELIVERY (do NOT post to Telegram yourself)
+═══════════════════════════════════════════════
+
+Push directly to main — no branch, no PR, no curl to api.telegram.org:
+
+  git checkout main
+  git pull --ff-only origin main
+  git add reports/events/
+  git commit -m "Weekly events: $TODAY"
+  git push origin main
+
+If the push is rejected because main moved, run
+"git pull --rebase origin main" and push again.
+
+Your job ends at "git push". Do NOT write reports/error.log or any
+auxiliary file.
+```
+
 ### LinkedIn routine — `reports/linkedin/$TODAY.md`
 
 Reads the day's news report and rewrites the 3–5 most LinkedIn-worthy
@@ -605,6 +763,7 @@ reports/
   opportunities/YYYY-MM-DD.md            # Opportunities routine output
   education/YYYY-MM-DD.md                # Education routine output
   news/YYYY-MM-DD.md                     # News routine output
+  events/YYYY-MM-DD.md                   # Events routine output (weekly, Thursday)
   linkedin/YYYY-MM-DD.md                 # LinkedIn routine output (reads from news/)
 state/
   posted.json                            # sha256 ledger (per file path)

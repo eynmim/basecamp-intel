@@ -7,7 +7,8 @@
     "opportunities": {
       "label": "💼 Opportunities",
       "topic_id": 2,
-      "has_deadline_board": true
+      "has_deadline_board": true,
+      "dedup": true
     },
     "education": {
       "label": "📚 Education",
@@ -23,6 +24,12 @@
       "label": "💼 LinkedIn",
       "topic_id": null,
       "has_deadline_board": false
+    },
+    "events": {
+      "label": "📅 Events",
+      "topic_id": 6450,
+      "has_deadline_board": true,
+      "dedup": true
     }
   }
 }

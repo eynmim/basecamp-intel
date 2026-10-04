@@ -5,8 +5,9 @@ Pipeline:
   2. Validate the report against the expected schema; abort if it drifts.
   3. Skip if state/posted.json already records this exact file (sha256).
   4. Split into one Telegram message per opportunity.
-  5. If the first message is a "═ ACTIVE DEADLINES ═" section, edit the
-     existing pinned message in place (or send + pin if no state yet).
+  5. If the first message is a "═ ACTIVE DEADLINES ═" (or, for events,
+     "═ EVENT CALENDAR ═") section, edit the existing pinned message in
+     place (or send + pin if no state yet).
   6. Send the rest as new messages.
   7. Update state/ files; the workflow commits them back to the repo.
 Failures (Telegram ok:false, schema drift, etc.) exit nonzero so the
@@ -25,6 +26,8 @@ import sys
 import time
 from pathlib import Path
 
+from zoneinfo import ZoneInfo
+
 import requests
 
 CHUNK_SIZE = 3800  # Telegram hard limit is 4096; leave headroom.
@@ -32,6 +35,7 @@ API_BASE = "https://api.telegram.org"
 STATE_DIR = Path("state")
 POSTED_LEDGER = STATE_DIR / "posted.json"
 PINNED_STATE = STATE_DIR / "pinned.json"
+SEEN_LEDGER = STATE_DIR / "seen.json"
 TOPICS_CONFIG = Path(".github/topics.json")
 
 # Section header line, e.g. <b>═ PORTFOLIO SNAPSHOT ═</b>
@@ -43,8 +47,32 @@ HTML_TAG_RE = re.compile(r"</?(b|i|u|s|a|code|pre|blockquote)\b", re.IGNORECASE)
 # A title line is any <b>...</b> line at the top of the report (before
 # the first section divider). Any category-specific title text is fine.
 TITLE_RE = re.compile(r"(?m)^<b>[^<\n]+</b>\s*$")
+# First external link inside an item — the opportunity's stable identity.
+# Item prose is rewritten by the scout every run (measured similarity 0.65-0.97
+# day-over-day), so text hashing cannot tell "changed" from "reworded". The
+# destination URL does not churn, so that is what we key the seen-ledger on.
+HREF_RE = re.compile(r'href="([^"]+)"')
+# "31 Aug 2026", "04 Sep 2026" — a moved deadline is the one delta worth re-sending.
+MONTHS = "Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec"
+DEADLINE_RE = re.compile(rf"\b(\d{{1,2}})\s+({MONTHS})[a-z]*\.?\s+(\d{{4}})\b", re.IGNORECASE)
+# A date only counts as a deadline if its line says so.
+# Ordered loosely by specificity: the earliest keyword in a clause wins, so
+# "last day to apply" has to be matchable or "document deadline 1 Feb" hijacks
+# a line whose real answer is "last day to apply 15 Jan".
+DEADLINE_KEYWORD_RE = re.compile(
+    r"last day to apply|apply by|applications? close|"
+    r"deadline|closes?\b|closing|application window|submission|due\b|expires?\b",
+    re.IGNORECASE,
+)
+# Board entry link, rewritten to point at the original Telegram message.
+BOARD_LINK_RE = re.compile(r'<a href="([^"]+)">([^<]*)</a>')
+# Largest the pinned board may get. validate_report() aborts the whole run at
+# 3500, and the board has grown 1016 -> 2906 chars since May, so cap it here.
+BOARD_LIMIT = 3000
+
 # Mark the deadline-board section so we know which message to pin/edit.
-DEADLINE_BOARD_RE = re.compile(r"(?m)^<b>═[^<]*ACTIVE DEADLINES[^<]*═</b>\s*$")
+# Events use the same mechanism under a calendar heading.
+DEADLINE_BOARD_RE = re.compile(r"(?m)^<b>═[^<]*(?:ACTIVE DEADLINES|EVENT CALENDAR)[^<]*═</b>\s*$")
 
 
 def die(msg: str) -> None:
@@ -306,6 +334,273 @@ def file_sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+# --------------------------------------------------------------------------
+# Duplicate suppression
+#
+# The scout re-researches every open opportunity every run, so ~87 % of a
+# daily report is material that already went out. Suppressing it here rather
+# than asking the scout to remember is deliberate: the URL is a stable key the
+# LLM cannot drift on, whereas item prose is rewritten each run.
+#
+# Cadence: one full re-send on the weekly refresh day (default Monday), then
+# new-only for the rest of the week. The pinned deadline board carries
+# everything still open, so nothing is lost by staying quiet.
+# --------------------------------------------------------------------------
+
+
+def item_url(msg: str) -> str | None:
+    """The opportunity's identity: its first non-Telegram link."""
+    for match in HREF_RE.finditer(msg):
+        url = match.group(1)
+        if not url.startswith("https://t.me/"):
+            return url.split("#")[0].rstrip("/")
+    return None
+
+
+def item_deadline(msg: str, today: dt.date | None = None) -> str | None:
+    """The item's closing date as YYYY-MM-DD, or None if not stated clearly.
+
+    Deliberately conservative. Taking the first date in the item mis-fires on
+    prose like "catalogue unchanged since 20 Oct 2025" or "window opened
+    22 Jul", which then reads as a moved deadline and re-sends a duplicate —
+    the exact thing this pipeline exists to stop. So: only dates on a line
+    that names a deadline, only future dates, and for a range ("18 Aug –
+    01 Sep 2026") the closing end.
+
+    Returning None is safe: a None on either side suppresses rather than
+    re-sends.
+    """
+    today = today or dt.datetime.now(ZoneInfo("Europe/Rome")).date()
+    for line in msg.splitlines():
+        # "|" and ";" separate independent facts on one line, e.g.
+        # "Deadline: 07 Aug 2026 | Award: ... Maker Faire 13 Dec 2026".
+        # Taking the largest date on the whole line picked up the fair date;
+        # when the scout later dropped that clause the value "moved" four
+        # months and fired a false 'Deadline moved' banner.
+        for clause in re.split(r"[|;]", line):
+            keyword = DEADLINE_KEYWORD_RE.search(clause)
+            if not keyword:
+                continue
+            # The date belonging to the keyword is the first one after it,
+            # not the largest in the clause. "last day to apply 15 Jan 2027,
+            # document deadline 1 Feb 2027" must resolve to 15 Jan, and must
+            # keep resolving to 15 Jan after the scout rewords the tail.
+            for match in DEADLINE_RE.finditer(clause, keyword.start()):
+                day, mon, year = match.groups()
+                month_num = MONTHS.split("|").index(mon[:3].title()) + 1
+                try:
+                    found = dt.date(int(year), month_num, int(day))
+                except ValueError:
+                    continue
+                if found >= today:
+                    return found.isoformat()
+    return None
+
+
+def evict_expired(seen: dict, *, grace_days: int = 90, today: dt.date | None = None) -> dict:
+    """Forget opportunities whose deadline is long past.
+
+    Annual programmes reuse their URL — DAAD STEM 2027 and 2028 are the same
+    link — so a permanent ledger would silently swallow next year's call. It
+    also keeps state/seen.json from growing in git forever.
+    """
+    today = today or dt.datetime.now(ZoneInfo("Europe/Rome")).date()
+    cutoff = today - dt.timedelta(days=grace_days)
+    stale = (today - dt.timedelta(days=180)).isoformat()
+    kept = {}
+    for url, record in seen.items():
+        deadline = record.get("deadline")
+        if deadline:
+            try:
+                if dt.date.fromisoformat(deadline) < cutoff:
+                    continue
+            except ValueError:
+                pass
+        elif record.get("last_sent", stale) < stale:
+            # Nothing to age out on (rolling calls, free meetups). Forget it once
+            # it hasn't gone out for half a year, so a yearly event that reuses
+            # its URL comes back as new instead of staying muted forever.
+            continue
+        kept[url] = record
+    dropped = len(seen) - len(kept)
+    if dropped:
+        print(f"  Seen-ledger: evicted {dropped} record(s) whose deadline "
+              f"passed before {cutoff.isoformat()}.")
+    return kept
+
+
+def deadline_move(item: str, record: dict, today: dt.date | None) -> tuple[str | None, str | None]:
+    """Decide whether this item's deadline genuinely moved.
+
+    Returns (new_deadline_to_announce, reason_it_was_suppressed).
+
+    The banner asserts a fact about a date, so a false one is worse than a
+    plain duplicate. Two guards, both measured against the 20-day August
+    window (5 raw re-sends -> 2):
+
+      A. Only announce a deadline getting *sooner*. Slipping later is not
+         urgent and rides along on the weekly full refresh anyway.
+      B. Never announce a date already recorded for this URL. A value that
+         returns to one it held before did not move — the scout's prose was
+         parsed differently, e.g. chips-ju bounced 09-16 -> 09-17 -> 09-07
+         -> 09-16 across four runs.
+    """
+    new = item_deadline(item, today)
+    old = record.get("deadline")
+    if not new or not old or new == old:
+        return None, None
+    if new in record.get("deadline_history", []):
+        return None, f"{old} -> {new} (seen before; extraction bounce)"
+    if new > old:
+        return None, f"{old} -> {new} (later, not urgent; waits for the weekly refresh)"
+    return new, None
+
+
+def split_item(msg: str) -> tuple[str, str | None]:
+    """Return (leading section header + preamble, numbered item) for a message.
+
+    split_into_messages() prepends the section header to the first item under
+    it. When that item is suppressed the header has to be transplanted onto
+    the next surviving item, so the two halves are separated here.
+    """
+    match = ITEM_START_RE.search(msg)
+    if not match:
+        return msg, None
+    return msg[: match.start()].strip(), msg[match.start():].strip()
+
+
+def filter_seen(
+    messages: list[str],
+    seen: dict,
+    *,
+    full_refresh: bool,
+    today: "dt.date | None" = None,
+) -> tuple[list[str], list[tuple[int, str]], dict]:
+    """Drop already-delivered items; keep sections, new items, moved deadlines.
+
+    Returns (kept messages, [(index in kept, url)] for ledger updates, stats).
+    """
+    kept: list[str] = []
+    urls: list[tuple[int, str]] = []
+    stats = {"suppressed": 0, "new": 0, "changed": 0, "sections": 0, "no_url": 0}
+    pending_header: str | None = None
+
+    for msg in messages:
+        header, item = split_item(msg)
+
+        if item is None:
+            # A section-only message (title block, PORTFOLIO SNAPSHOT, the
+            # deadline board, THIS WEEK'S INTEL). Always fresh — always sent.
+            kept.append(msg)
+            pending_header = None
+            stats["sections"] += 1
+            continue
+
+        if header:
+            pending_header = header
+
+        url = item_url(item)
+        record = seen.get(url) if url else None
+
+        if url is None:
+            # No link to key on. Sending is the safe direction.
+            stats["no_url"] += 1
+        elif record and not full_refresh:
+            moved, why = deadline_move(item, record, today)
+            if moved:
+                stats["changed"] += 1
+                item = f"<i>🔄 Deadline moved: {record['deadline']} → {moved}</i>\n{item}"
+            else:
+                if why:
+                    # Log, don't deliver. If these turn out to be real moves the
+                    # guards are too tight and the log is the evidence.
+                    stats.setdefault("guarded", [])
+                    stats["guarded"].append(why)
+                stats["suppressed"] += 1
+                continue
+        elif record:
+            pass  # full refresh — re-send everything
+        else:
+            stats["new"] += 1
+
+        if pending_header:
+            item = f"{pending_header}\n\n{item}"
+            pending_header = None
+        if url:
+            urls.append((len(kept), url))
+        kept.append(item)
+
+    return kept, urls, stats
+
+
+def renumber(messages: list[str]) -> list[str]:
+    """Renumber surviving items 1..N so the feed doesn't read '2., 7., 19.'."""
+    counter = 0
+    out: list[str] = []
+    for msg in messages:
+        match = ITEM_START_RE.search(msg)
+        if not match:
+            out.append(msg)
+            continue
+        counter += 1
+        start = match.start()
+        out.append(msg[:start] + re.sub(r"^<b>\d+\.", f"<b>{counter}.", msg[start:]))
+    return out
+
+
+def telegram_permalink(chat_id: str, thread_id: int | None, message_id: int) -> str | None:
+    """Deep link to a message inside a private supergroup topic."""
+    if not chat_id.startswith("-100"):
+        return None
+    internal = chat_id[4:]
+    if thread_id is not None:
+        return f"https://t.me/c/{internal}/{thread_id}/{message_id}"
+    return f"https://t.me/c/{internal}/{message_id}"
+
+
+def link_board_to_messages(
+    board: str, seen: dict, chat_id: str, thread_id: int | None
+) -> tuple[str, int]:
+    """Repoint each board entry's link at the original Telegram message.
+
+    The board is a reminder index, so its arrow should jump to the full item
+    already in the topic (which carries the external link) rather than leave
+    Telegram. Entries with no recorded message_id keep their external link.
+    """
+    linked = 0
+
+    def _swap(match: re.Match[str]) -> str:
+        nonlocal linked
+        url, label = match.group(1), match.group(2)
+        record = seen.get(url.split("#")[0].rstrip("/"))
+        message_id = record.get("message_id") if record else None
+        if not message_id:
+            return match.group(0)
+        permalink = telegram_permalink(chat_id, thread_id, message_id)
+        if not permalink:
+            return match.group(0)
+        linked += 1
+        return f'<a href="{permalink}">{label}</a>'
+
+    return BOARD_LINK_RE.sub(_swap, board), linked
+
+
+def cap_board(board: str, limit: int = BOARD_LIMIT) -> str:
+    """Trim the board to a line count that fits, newest-dropped-last.
+
+    validate_report() aborts the whole run past 3500 chars and the board has
+    grown steadily, so this is a hard backstop rather than a nicety.
+    """
+    if len(board) <= limit:
+        return board
+    lines = board.split("\n")
+    while len("\n".join(lines)) > limit - 60 and len(lines) > 2:
+        lines.pop()
+    dropped = len(board.split("\n")) - len(lines)
+    lines.append(f"\n<i>… +{dropped} more, trimmed to fit Telegram's limit</i>")
+    return "\n".join(lines)
+
+
 def main() -> None:
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
     chat_id = os.environ.get("TELEGRAM_CHANNEL_ID", "").strip()
@@ -367,6 +662,69 @@ def main() -> None:
     if not messages:
         die(f"After splitting, no messages to send from {report_file}.")
 
+    # --- Duplicate suppression -------------------------------------------
+    # Weekly rhythm: one full re-send on refresh day, new-only the rest of
+    # the week. Rome time, because that's the clock the scouts date against.
+    seen_all = load_json(SEEN_LEDGER, {})
+    if not isinstance(seen_all, dict):
+        seen_all = {}
+    seen = seen_all.setdefault(category, {})
+    seen = evict_expired(seen)
+    seen_all[category] = seen
+
+    cats_cfg = load_json(TOPICS_CONFIG, {}).get("categories", {}) or {}
+    dedup_enabled = bool(cats_cfg.get(category, {}).get("dedup", False))
+
+    today_rome = dt.datetime.now(ZoneInfo("Europe/Rome")).date()
+    refresh_day = os.environ.get("WEEKLY_REFRESH_DAY", "mon").strip().lower()[:3]
+    weekdays = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+    is_refresh_day = refresh_day in weekdays and today_rome.weekday() == weekdays.index(refresh_day)
+    full_refresh = (
+        is_refresh_day
+        or force
+        or os.environ.get("FULL_REFRESH", "").strip().lower() in ("1", "true", "yes")
+    )
+
+    item_urls: list[tuple[int, str]] = []
+    if dedup_enabled:
+        messages, item_urls, stats = filter_seen(
+            messages, seen, full_refresh=full_refresh, today=today_rome
+        )
+        messages = renumber(messages)
+        mode = "FULL REFRESH (weekly)" if full_refresh else "new-only"
+        print(f"  Dedup [{mode}]: {stats['new']} new, {stats['changed']} deadline-moved, "
+              f"{stats['suppressed']} suppressed, {stats['sections']} sections, "
+              f"{stats['no_url']} unkeyed.")
+        for why in stats.get("guarded", []):
+            print(f"    guarded 'Deadline moved': {why}")
+        if not full_refresh and stats["new"] == 0 and stats["changed"] == 0:
+            print("  Nothing new today — only the sections and the refreshed board go out.")
+
+    # Point the pinned board's arrows at the original messages, and cap its
+    # size so a busy week can't push it past the validator's 3500-char abort.
+    if has_board:
+        rebuilt = []
+        for msg in messages:
+            if DEADLINE_BOARD_RE.search(msg):
+                msg, linked = link_board_to_messages(msg, seen, chat_id, thread_id)
+                before = len(msg)
+                msg = cap_board(msg)
+                print(f"  Deadline board: {linked} entr(ies) deep-linked to their "
+                      f"original message; {before} chars"
+                      + (f" -> {len(msg)} (trimmed)" if len(msg) != before else ""))
+            rebuilt.append(msg)
+        messages = rebuilt
+
+    if not messages:
+        # Every item was already delivered and the report had no standalone
+        # sections. A silent day is a correct outcome, not a failure — say so
+        # rather than exiting nonzero and firing the failure alert.
+        messages = [
+            f"<b>📡 {label} — {today_rome.isoformat()}</b>\n\n"
+            "Nothing new since the last run. The pinned deadline board is "
+            "current."
+        ]
+
     # Pinned-state is keyed by category so each topic has its own deadline
     # board state. Schema: {"<category>": {"message_id": ..., "last_updated": ...}}.
     # Older single-category runs wrote a flat {"message_id": ...} dict; if we
@@ -396,6 +754,8 @@ def main() -> None:
     elif has_board:
         print("  Category supports a deadline board, but the report doesn't include one.")
 
+    url_by_index = dict(item_urls)
+
     sent = 0
     for i, msg in enumerate(messages):
         is_deadline_board = i == deadline_idx
@@ -412,6 +772,12 @@ def main() -> None:
                 if edit_message(token, chat_id, pin_state["message_id"], chunk):
                     print(f"    edited existing pinned message {pin_state['message_id']}.")
                     pin_message(token, chat_id, pin_state["message_id"])  # re-pin if user unpinned
+                    # Stamp the edit too, not just send+pin — otherwise
+                    # last_updated freezes at the day the board was created
+                    # and reads as a dead pipeline.
+                    pin_state["last_updated"] = dt.datetime.now(dt.timezone.utc).isoformat()
+                    pin_state_all[category] = pin_state
+                    save_json(PINNED_STATE, pin_state_all)
                     sent += 1
                     time.sleep(1)
                     continue
@@ -419,6 +785,28 @@ def main() -> None:
 
             mid = send_message(token, chat_id, chunk, thread_id=thread_id)
             sent += 1
+
+            # Remember where this opportunity landed, so the deadline board
+            # can link back to it and future runs can suppress it.
+            if j == 0 and i in url_by_index:
+                url = url_by_index[i]
+                record = seen.setdefault(url, {"first_seen": today_rome.isoformat()})
+                title_match = re.search(r"<b>\d+\.\s*(.+?)</b>", msg)
+                deadline = item_deadline(msg, today_rome) or record.get("deadline")
+                history = record.setdefault("deadline_history", [])
+                if deadline and deadline not in history:
+                    history.append(deadline)
+                record.update({
+                    "title": title_match.group(1)[:120] if title_match else record.get("title", ""),
+                    "deadline": deadline,
+                    "last_sent": today_rome.isoformat(),
+                    "message_id": mid,
+                })
+                # Persist per message, not at the end. A die() at message 20
+                # of Monday's 23 would otherwise re-send all 20 next run —
+                # and Monday's run is both the largest and the likeliest to
+                # trip a rate limit.
+                save_json(SEEN_LEDGER, seen_all)
 
             if is_deadline_board and j == 0:
                 pin_message(token, chat_id, mid)
@@ -430,6 +818,12 @@ def main() -> None:
                 save_json(PINNED_STATE, pin_state_all)
 
             time.sleep(1)  # Stay under per-chat rate limits.
+
+    # Persist the seen-ledger so tomorrow's run can suppress what just went out.
+    if dedup_enabled:
+        seen_all[category] = seen
+        save_json(SEEN_LEDGER, seen_all)
+        print(f"  Seen-ledger: {len(seen)} known opportunit(ies) in '{category}'.")
 
     # Update the posted-ledger after a fully successful run.
     posted_reports[report_file] = {

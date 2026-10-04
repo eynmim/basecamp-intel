@@ -16,6 +16,11 @@ on:
         required: false
         default: 'false'
         type: boolean
+      full_refresh:
+        description: 'Send every item, including ones already delivered this week (what the weekly Monday run does automatically).'
+        required: false
+        default: 'false'
+        type: boolean
 
 permissions:
   contents: write  # needed to commit state/ updates back
@@ -110,10 +115,19 @@ jobs:
           REPORT_FILE: ${{ steps.pick.outputs.file }}
           REPORT_CATEGORY: ${{ steps.pick.outputs.category }}
           FORCE_REPOST: ${{ github.event.inputs.force || 'false' }}
+          # Day of the week that gets the full re-send; every other day is
+          # new-only. Rome time, matching the dates the scouts write.
+          WEEKLY_REFRESH_DAY: mon
+          FULL_REFRESH: ${{ github.event.inputs.full_refresh || 'false' }}
         run: python .github/scripts/post_to_telegram.py
 
       - name: Commit state changes
-        if: success()
+        # always(), not success(): if the run dies part-way through sending,
+        # state/seen.json already records what did go out. Committing it means
+        # the retry sends only the remainder instead of repeating everything.
+        # posted.json is still only written on full success, so the report
+        # itself is still retried.
+        if: always()
         shell: bash
         run: |
           set -euo pipefail
