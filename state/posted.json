@@ -1565,6 +1565,12 @@
       "category": "events",
       "posted_at": "2026-10-04T10:52:37.327451+00:00",
       "message_count": 5
+    },
+    "reports/2026-10-05.md": {
+      "sha256": "25b3b61ba6cb46b56a34454ddd6b54a214c35aa89ddaf67af6866f15ffb61992",
+      "category": "opportunities",
+      "posted_at": "2026-10-05T05:12:56.371116+00:00",
+      "message_count": 14
     }
   }
 }

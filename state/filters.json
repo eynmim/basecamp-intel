@@ -82,5 +82,109 @@
         "country": "Belgium"
       }
     ]
+  },
+  "opportunities": {
+    "updated": "2026-10-05",
+    "label": "💼 Opportunities",
+    "board": "<b>═ 📋 ACTIVE DEADLINES ═</b>\n\n⚡ <b>08 Oct (3d)</b> — Graphcore Senior Firmware Engineer, Bristol <a href=\"https://tarve.co.uk/jobs/senior-firmware-engineer-graphcore-d49a33b3\">→</a>\n⚡ <b>16 Oct (11d)</b> — CERN Technical Student 2027 <a href=\"https://careers.cern/students\">→</a>\n⚡ <b>16 Oct (11d)</b> — KTH MSc Embedded Systems applications open <a href=\"https://www.kth.se/en/studies/master/embedded-systems/msc-embedded-systems-1.70455\">→</a>\n🔄 <b>30 Oct (25d)</b> — DAAD Iran scholarship database re-check <a href=\"https://www.daad-iran.org/en/scholarship-database/\">→</a>\n⚡ <b>15 Nov (41d)</b> — Saarland MSc Embedded Systems early deadline <a href=\"https://www.uni-saarland.de/en/study/programmes/embedded-systems-msc.html\">→</a>\n🔄 <b>24 Nov (50d)</b> — MSCA Doctoral Networks 2026 <a href=\"https://marie-sklodowska-curie-actions.ec.europa.eu/calls/msca-doctoral-networks-2026\">→</a>\n🔄 <b>15 Dec (71d)</b> — MBZUAI AI Scholarship, UAE (verify official site) <a href=\"https://www.scholarshipscentral.com/blog/mbzuai-scholarship\">→</a>\n🔄 <b>04 Jan 2027 (91d)</b> — CYBERSURE admissions close <a href=\"https://www.cybersure-master.eu/\">→</a>\n🆕 <b>15 Jan 2027 (102d)</b> — KTH MSc Embedded Systems application deadline <a href=\"https://www.kth.se/en/studies/master/embedded-systems/msc-embedded-systems-1.70455\">→</a>\n🔄 <b>01 Feb 2027 (119d)</b> — TU/e Edge Intelligence auto-scholarship deadline <a href=\"https://www.mastersportal.com/studies/486566/edge-intelligence-mastertrack-embedded-systems.html\">→</a>\n🔄 <b>~Mar 2027</b> — Erasmus Mundus EMINENT <a href=\"https://eminent-master.eu\">→</a>",
+    "keyboard": [
+      [
+        {
+          "text": "🇩🇪 Germany (2)",
+          "callback_data": "loc:opportunities:Germany:4f244a"
+        },
+        {
+          "text": "🇸🇪 Sweden (2)",
+          "callback_data": "loc:opportunities:Sweden:4f244a"
+        },
+        {
+          "text": "🇳🇱 Netherlands (1)",
+          "callback_data": "loc:opportunities:Netherlands:4f244a"
+        }
+      ],
+      [
+        {
+          "text": "🇨🇭 Switzerland (1)",
+          "callback_data": "loc:opportunities:Switzerland:4f244a"
+        },
+        {
+          "text": "🇬🇧 United Kingdom (1)",
+          "callback_data": "loc:opportunities:United Kingdom:4f244a"
+        },
+        {
+          "text": "🇪🇺 EU-wide (2)",
+          "callback_data": "loc:opportunities:EU-wide:4f244a"
+        }
+      ],
+      [
+        {
+          "text": "❔ Unknown (2)",
+          "callback_data": "loc:opportunities:Unknown:4f244a"
+        }
+      ],
+      [
+        {
+          "text": "📋 All",
+          "callback_data": "loc:opportunities:ALL:4f244a"
+        }
+      ]
+    ],
+    "lines": [
+      {
+        "html": "⚡ <b>08 Oct (3d)</b> — Graphcore Senior Firmware Engineer, Bristol <a href=\"https://tarve.co.uk/jobs/senior-firmware-engineer-graphcore-d49a33b3\">→</a>",
+        "city": "Bristol",
+        "country": "United Kingdom"
+      },
+      {
+        "html": "⚡ <b>16 Oct (11d)</b> — CERN Technical Student 2027 <a href=\"https://careers.cern/students\">→</a>",
+        "city": "Geneva",
+        "country": "Switzerland"
+      },
+      {
+        "html": "⚡ <b>16 Oct (11d)</b> — KTH MSc Embedded Systems applications open <a href=\"https://www.kth.se/en/studies/master/embedded-systems/msc-embedded-systems-1.70455\">→</a>",
+        "city": "Stockholm",
+        "country": "Sweden"
+      },
+      {
+        "html": "🔄 <b>30 Oct (25d)</b> — DAAD Iran scholarship database re-check <a href=\"https://www.daad-iran.org/en/scholarship-database/\">→</a>",
+        "city": "",
+        "country": "Germany"
+      },
+      {
+        "html": "⚡ <b>15 Nov (41d)</b> — Saarland MSc Embedded Systems early deadline <a href=\"https://www.uni-saarland.de/en/study/programmes/embedded-systems-msc.html\">→</a>",
+        "city": "Saarbrücken",
+        "country": "Germany"
+      },
+      {
+        "html": "🔄 <b>24 Nov (50d)</b> — MSCA Doctoral Networks 2026 <a href=\"https://marie-sklodowska-curie-actions.ec.europa.eu/calls/msca-doctoral-networks-2026\">→</a>",
+        "city": "",
+        "country": "EU-wide"
+      },
+      {
+        "html": "🔄 <b>15 Dec (71d)</b> — MBZUAI AI Scholarship, UAE (verify official site) <a href=\"https://www.scholarshipscentral.com/blog/mbzuai-scholarship\">→</a>",
+        "city": "",
+        "country": "Unknown"
+      },
+      {
+        "html": "🔄 <b>04 Jan 2027 (91d)</b> — CYBERSURE admissions close <a href=\"https://www.cybersure-master.eu/\">→</a>",
+        "city": "",
+        "country": "Unknown"
+      },
+      {
+        "html": "🆕 <b>15 Jan 2027 (102d)</b> — KTH MSc Embedded Systems application deadline <a href=\"https://www.kth.se/en/studies/master/embedded-systems/msc-embedded-systems-1.70455\">→</a>",
+        "city": "Stockholm",
+        "country": "Sweden"
+      },
+      {
+        "html": "🔄 <b>01 Feb 2027 (119d)</b> — TU/e Edge Intelligence auto-scholarship deadline <a href=\"https://www.mastersportal.com/studies/486566/edge-intelligence-mastertrack-embedded-systems.html\">→</a>",
+        "city": "Eindhoven",
+        "country": "Netherlands"
+      },
+      {
+        "html": "🔄 <b>~Mar 2027</b> — Erasmus Mundus EMINENT <a href=\"https://eminent-master.eu\">→</a>",
+        "city": "",
+        "country": "EU-wide"
+      }
+    ]
   }
 }

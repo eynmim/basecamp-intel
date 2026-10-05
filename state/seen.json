@@ -74,5 +74,97 @@
       "last_sent": "2026-10-04",
       "message_id": 6465
     }
+  },
+  "opportunities": {
+    "https://careers.cern/students": {
+      "first_seen": "2026-10-05",
+      "deadline_history": [
+        "2026-10-16"
+      ],
+      "title": "CERN Technical Student Programme (Geneva)",
+      "deadline": "2026-10-16",
+      "last_sent": "2026-10-05",
+      "message_id": 6468
+    },
+    "https://tarve.co.uk/jobs/senior-firmware-engineer-graphcore-d49a33b3": {
+      "first_seen": "2026-10-05",
+      "deadline_history": [
+        "2026-10-08"
+      ],
+      "title": "Graphcore — Senior Firmware Engineer (Bristol, UK)",
+      "deadline": "2026-10-08",
+      "last_sent": "2026-10-05",
+      "message_id": 6469
+    },
+    "https://www.kth.se/en/studies/master/embedded-systems/msc-embedded-systems-1.70455": {
+      "first_seen": "2026-10-05",
+      "deadline_history": [
+        "2026-10-16"
+      ],
+      "title": "KTH — MSc Embedded Systems (Sweden)",
+      "deadline": "2026-10-16",
+      "last_sent": "2026-10-05",
+      "message_id": 6470
+    },
+    "https://www.upv.es/estudios/master/muise/en/2026/05/28/rd-scholarship-at-fermax": {
+      "first_seen": "2026-10-05",
+      "deadline_history": [],
+      "title": "FERMAX — R&amp;D scholarship, embedded software internship (Valencia)",
+      "deadline": null,
+      "last_sent": "2026-10-05",
+      "message_id": 6471
+    },
+    "https://www.pro2future.at/?p=15056": {
+      "first_seen": "2026-10-05",
+      "deadline_history": [],
+      "title": "Pro²Future — Applied &amp; Embedded AI research internships (Graz)",
+      "deadline": null,
+      "last_sent": "2026-10-05",
+      "message_id": 6472
+    },
+    "https://www.uni-saarland.de/en/study/programmes/embedded-systems-msc.html": {
+      "first_seen": "2026-10-05",
+      "deadline_history": [
+        "2026-11-15"
+      ],
+      "title": "Saarland University — MSc Embedded Systems (Germany)",
+      "deadline": "2026-11-15",
+      "last_sent": "2026-10-05",
+      "message_id": 6473
+    },
+    "https://www.mastersportal.com/studies/486566/edge-intelligence-mastertrack-embedded-systems.html": {
+      "first_seen": "2026-10-05",
+      "deadline_history": [
+        "2027-02-01"
+      ],
+      "title": "TU Eindhoven — MSc Embedded Systems, Edge Intelligence track",
+      "deadline": "2027-02-01",
+      "last_sent": "2026-10-05",
+      "message_id": 6474
+    },
+    "https://www.daad-iran.org/en/scholarship-database": {
+      "first_seen": "2026-10-05",
+      "deadline_history": [],
+      "title": "DAAD Scholarships for Iranians (Germany)",
+      "deadline": null,
+      "last_sent": "2026-10-05",
+      "message_id": 6475
+    },
+    "https://eminent-master.eu": {
+      "first_seen": "2026-10-05",
+      "deadline_history": [],
+      "title": "Erasmus Mundus 2027–28 intake (incl. EMINENT)",
+      "deadline": null,
+      "last_sent": "2026-10-05",
+      "message_id": 6476
+    },
+    "https://marie-sklodowska-curie-actions.ec.europa.eu/calls/msca-doctoral-networks-2026": {
+      "first_seen": "2026-10-05",
+      "deadline_history": [],
+      "title": "MSCA Doctoral Networks — edge AI and embedded PhD positions",
+      "deadline": null,
+      "last_sent": "2026-10-05",
+      "message_id": 6477
+    }
   }
 }
