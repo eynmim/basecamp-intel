@@ -165,6 +165,22 @@
       "deadline": null,
       "last_sent": "2026-10-05",
       "message_id": 6477
+    },
+    "https://www.imec-int.com/en/work-at-imec/job-opportunities/phd-researcher-brain-inspired-edge-ai-processors": {
+      "first_seen": "2026-10-06",
+      "deadline_history": [],
+      "title": "imec — PhD researcher, brain-inspired edge AI processors (Leuven)",
+      "deadline": null,
+      "last_sent": "2026-10-06",
+      "message_id": 6515
+    },
+    "https://www.tugraz.at/institute/iti/forschung/laufende-projekte/eu-msca-ant": {
+      "first_seen": "2026-10-06",
+      "deadline_history": [],
+      "title": "ANT — MSCA Doctoral Network on Embedded AI Systems",
+      "deadline": null,
+      "last_sent": "2026-10-06",
+      "message_id": 6516
     }
   }
 }
