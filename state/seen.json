@@ -181,6 +181,14 @@
       "deadline": null,
       "last_sent": "2026-10-06",
       "message_id": 6516
+    },
+    "https://www.academictransfer.com/nl/jobs/361513/phd-in-computer-architecture-for-real-time-ai-at-the-edge": {
+      "first_seen": "2026-10-08",
+      "deadline_history": [],
+      "title": "TU Eindhoven — PhD, Computer Architecture for Real-Time AI at the Edge",
+      "deadline": null,
+      "last_sent": "2026-10-08",
+      "message_id": 6523
     }
   }
 }
