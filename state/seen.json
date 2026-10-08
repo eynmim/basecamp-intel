@@ -73,6 +73,22 @@
       "deadline": null,
       "last_sent": "2026-10-04",
       "message_id": 6465
+    },
+    "https://electronica.de/en/visitors/tickets-prices": {
+      "first_seen": "2026-10-08",
+      "deadline_history": [],
+      "title": "electronica 2026 (incl. edge lab LIVE!)",
+      "deadline": null,
+      "last_sent": "2026-10-08",
+      "message_id": 6543
+    },
+    "https://www.embedded-world.de/en": {
+      "first_seen": "2026-10-08",
+      "deadline_history": [],
+      "title": "Embedded World 2027",
+      "deadline": null,
+      "last_sent": "2026-10-08",
+      "message_id": 6544
     }
   },
   "opportunities": {

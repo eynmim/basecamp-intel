@@ -1607,6 +1607,12 @@
       "category": "news",
       "posted_at": "2026-10-08T05:14:53.676283+00:00",
       "message_count": 17
+    },
+    "reports/events/2026-10-08.md": {
+      "sha256": "d22de1eefe85b594f8d1f8983e3215d045b482e8b008d37590b49bc43edb1367",
+      "category": "events",
+      "posted_at": "2026-10-08T05:37:40.199258+00:00",
+      "message_count": 4
     }
   }
 }
