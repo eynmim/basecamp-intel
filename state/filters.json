@@ -89,99 +89,88 @@
     ]
   },
   "opportunities": {
-    "updated": "2026-10-08",
+    "updated": "2026-10-09",
     "label": "💼 Opportunities",
-    "board": "<b>═ 📋 ACTIVE DEADLINES ═</b>\n\n⚡ <b>08 Oct (today)</b> — Graphcore Senior Firmware Engineer, Bristol <a href=\"https://t.me/c/3957539319/2/6469\">→</a>\n⚡ <b>16 Oct (8d)</b> — CERN Technical Student 2027 <a href=\"https://t.me/c/3957539319/2/6468\">→</a>\n⚡ <b>16 Oct (8d)</b> — KTH MSc Embedded Systems applications open <a href=\"https://t.me/c/3957539319/2/6470\">→</a>\n🔄 <b>30 Oct (22d)</b> — DAAD Iran scholarship database re-check <a href=\"https://t.me/c/3957539319/2/6475\">→</a>\n⚡ <b>15 Nov (38d)</b> — Saarland MSc Embedded Systems early deadline <a href=\"https://t.me/c/3957539319/2/6473\">→</a>\n🔄 <b>24 Nov (47d)</b> — MSCA Doctoral Networks 2026 <a href=\"https://t.me/c/3957539319/2/6477\">→</a>\n🔄 <b>15 Dec (68d)</b> — MBZUAI AI Scholarship, UAE (verify official site) <a href=\"https://www.scholarshipscentral.com/blog/mbzuai-scholarship\">→</a>\n🔄 <b>04 Jan 2027 (88d)</b> — CYBERSURE admissions close <a href=\"https://www.cybersure-master.eu/\">→</a>\n🆕 <b>15 Jan 2027 (99d)</b> — KTH MSc Embedded Systems application deadline <a href=\"https://t.me/c/3957539319/2/6470\">→</a>\n🔄 <b>01 Feb 2027 (116d)</b> — TU/e Edge Intelligence auto-scholarship deadline <a href=\"https://t.me/c/3957539319/2/6474\">→</a>\n🔄 <b>~Mar 2027</b> — Erasmus Mundus EMINENT <a href=\"https://t.me/c/3957539319/2/6476\">→</a>",
+    "board": "<b>═ 📋 ACTIVE DEADLINES ═</b>\n\n⚡ <b>16 Oct (7d)</b> — CERN Technical Student 2027 <a href=\"https://t.me/c/3957539319/2/6468\">→</a>\n⚡ <b>16 Oct (7d)</b> — KTH MSc Embedded Systems applications open <a href=\"https://t.me/c/3957539319/2/6470\">→</a>\n🔄 <b>30 Oct (21d)</b> — DAAD Iran scholarship database re-check <a href=\"https://t.me/c/3957539319/2/6475\">→</a>\n⚡ <b>15 Nov (37d)</b> — Saarland MSc Embedded Systems early deadline <a href=\"https://t.me/c/3957539319/2/6473\">→</a>\n🔄 <b>24 Nov (46d)</b> — MSCA Doctoral Networks 2026 <a href=\"https://t.me/c/3957539319/2/6477\">→</a>\n🔄 <b>15 Dec (67d)</b> — MBZUAI AI Scholarship, UAE (verify official site) <a href=\"https://www.scholarshipscentral.com/blog/mbzuai-scholarship\">→</a>\n🔄 <b>04 Jan 2027 (87d)</b> — CYBERSURE admissions close <a href=\"https://www.cybersure-master.eu/\">→</a>\n🆕 <b>15 Jan 2027 (98d)</b> — KTH MSc Embedded Systems application deadline <a href=\"https://t.me/c/3957539319/2/6470\">→</a>\n🔄 <b>01 Feb 2027 (115d)</b> — TU/e Edge Intelligence auto-scholarship deadline <a href=\"https://t.me/c/3957539319/2/6474\">→</a>\n🔄 <b>~Mar 2027</b> — Erasmus Mundus EMINENT <a href=\"https://t.me/c/3957539319/2/6476\">→</a>",
     "keyboard": [
       [
         {
           "text": "🇩🇪 Germany (2)",
-          "callback_data": "loc:opportunities:Germany:84699b"
+          "callback_data": "loc:opportunities:Germany:fd732b"
         },
         {
           "text": "🇸🇪 Sweden (2)",
-          "callback_data": "loc:opportunities:Sweden:84699b"
+          "callback_data": "loc:opportunities:Sweden:fd732b"
         },
         {
           "text": "🇳🇱 Netherlands (1)",
-          "callback_data": "loc:opportunities:Netherlands:84699b"
+          "callback_data": "loc:opportunities:Netherlands:fd732b"
         }
       ],
       [
         {
           "text": "🇨🇭 Switzerland (1)",
-          "callback_data": "loc:opportunities:Switzerland:84699b"
-        },
-        {
-          "text": "🇬🇧 United Kingdom (1)",
-          "callback_data": "loc:opportunities:United Kingdom:84699b"
+          "callback_data": "loc:opportunities:Switzerland:fd732b"
         },
         {
           "text": "🇪🇺 EU-wide (2)",
-          "callback_data": "loc:opportunities:EU-wide:84699b"
-        }
-      ],
-      [
+          "callback_data": "loc:opportunities:EU-wide:fd732b"
+        },
         {
           "text": "❔ Unknown (2)",
-          "callback_data": "loc:opportunities:Unknown:84699b"
+          "callback_data": "loc:opportunities:Unknown:fd732b"
         }
       ],
       [
         {
           "text": "📋 All",
-          "callback_data": "loc:opportunities:ALL:84699b"
+          "callback_data": "loc:opportunities:ALL:fd732b"
         }
       ]
     ],
     "lines": [
       {
-        "html": "⚡ <b>08 Oct (today)</b> — Graphcore Senior Firmware Engineer, Bristol <a href=\"https://t.me/c/3957539319/2/6469\">→</a>",
-        "city": "Bristol",
-        "country": "United Kingdom"
-      },
-      {
-        "html": "⚡ <b>16 Oct (8d)</b> — CERN Technical Student 2027 <a href=\"https://t.me/c/3957539319/2/6468\">→</a>",
+        "html": "⚡ <b>16 Oct (7d)</b> — CERN Technical Student 2027 <a href=\"https://t.me/c/3957539319/2/6468\">→</a>",
         "city": "Geneva",
         "country": "Switzerland"
       },
       {
-        "html": "⚡ <b>16 Oct (8d)</b> — KTH MSc Embedded Systems applications open <a href=\"https://t.me/c/3957539319/2/6470\">→</a>",
+        "html": "⚡ <b>16 Oct (7d)</b> — KTH MSc Embedded Systems applications open <a href=\"https://t.me/c/3957539319/2/6470\">→</a>",
         "city": "Stockholm",
         "country": "Sweden"
       },
       {
-        "html": "🔄 <b>30 Oct (22d)</b> — DAAD Iran scholarship database re-check <a href=\"https://t.me/c/3957539319/2/6475\">→</a>",
+        "html": "🔄 <b>30 Oct (21d)</b> — DAAD Iran scholarship database re-check <a href=\"https://t.me/c/3957539319/2/6475\">→</a>",
         "city": "",
         "country": "Germany"
       },
       {
-        "html": "⚡ <b>15 Nov (38d)</b> — Saarland MSc Embedded Systems early deadline <a href=\"https://t.me/c/3957539319/2/6473\">→</a>",
+        "html": "⚡ <b>15 Nov (37d)</b> — Saarland MSc Embedded Systems early deadline <a href=\"https://t.me/c/3957539319/2/6473\">→</a>",
         "city": "Saarbrücken",
         "country": "Germany"
       },
       {
-        "html": "🔄 <b>24 Nov (47d)</b> — MSCA Doctoral Networks 2026 <a href=\"https://t.me/c/3957539319/2/6477\">→</a>",
+        "html": "🔄 <b>24 Nov (46d)</b> — MSCA Doctoral Networks 2026 <a href=\"https://t.me/c/3957539319/2/6477\">→</a>",
         "city": "",
         "country": "EU-wide"
       },
       {
-        "html": "🔄 <b>15 Dec (68d)</b> — MBZUAI AI Scholarship, UAE (verify official site) <a href=\"https://www.scholarshipscentral.com/blog/mbzuai-scholarship\">→</a>",
+        "html": "🔄 <b>15 Dec (67d)</b> — MBZUAI AI Scholarship, UAE (verify official site) <a href=\"https://www.scholarshipscentral.com/blog/mbzuai-scholarship\">→</a>",
         "city": "",
         "country": "Unknown"
       },
       {
-        "html": "🔄 <b>04 Jan 2027 (88d)</b> — CYBERSURE admissions close <a href=\"https://www.cybersure-master.eu/\">→</a>",
+        "html": "🔄 <b>04 Jan 2027 (87d)</b> — CYBERSURE admissions close <a href=\"https://www.cybersure-master.eu/\">→</a>",
         "city": "",
         "country": "Unknown"
       },
       {
-        "html": "🆕 <b>15 Jan 2027 (99d)</b> — KTH MSc Embedded Systems application deadline <a href=\"https://t.me/c/3957539319/2/6470\">→</a>",
+        "html": "🆕 <b>15 Jan 2027 (98d)</b> — KTH MSc Embedded Systems application deadline <a href=\"https://t.me/c/3957539319/2/6470\">→</a>",
         "city": "Stockholm",
         "country": "Sweden"
       },
       {
-        "html": "🔄 <b>01 Feb 2027 (116d)</b> — TU/e Edge Intelligence auto-scholarship deadline <a href=\"https://t.me/c/3957539319/2/6474\">→</a>",
+        "html": "🔄 <b>01 Feb 2027 (115d)</b> — TU/e Edge Intelligence auto-scholarship deadline <a href=\"https://t.me/c/3957539319/2/6474\">→</a>",
         "city": "Eindhoven",
         "country": "Netherlands"
       },
