@@ -213,6 +213,22 @@
       "deadline": null,
       "last_sent": "2026-10-09",
       "message_id": 6547
+    },
+    "https://builtin.com/job/intern-low-cost-ble-digital-implementation/7107930": {
+      "first_seen": "2026-10-10",
+      "deadline_history": [],
+      "title": "Renesas — Master's thesis, low-cost BLE digital core (Netherlands)",
+      "deadline": null,
+      "last_sent": "2026-10-10",
+      "message_id": 6585
+    },
+    "https://www.ziprecruiter.de/jobs/569293465-working-student-m-f-x-firmware-application-development-bei-aeg-power-solutions": {
+      "first_seen": "2026-10-10",
+      "deadline_history": [],
+      "title": "AEG Power Solutions — Working student, firmware application development (Warstein)",
+      "deadline": null,
+      "last_sent": "2026-10-10",
+      "message_id": 6586
     }
   }
 }
