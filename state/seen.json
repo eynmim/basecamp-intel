@@ -237,6 +237,22 @@
       "deadline": null,
       "last_sent": "2026-10-12",
       "message_id": 6623
+    },
+    "https://www.feki.de/sites/default/files/job-dokumente/6a620a9032bf52.91446036.pdf": {
+      "first_seen": "2026-10-15",
+      "deadline_history": [],
+      "title": "Fraunhofer IIS — Internship, firmware for energy-efficient GNSS tracker (Nuremberg)",
+      "deadline": null,
+      "last_sent": "2026-10-15",
+      "message_id": 6701
+    },
+    "https://aijobs.net/job/praktikum-oder-abschlussarbeit-embedded-firmware-entwicklung-maulburg-de-79689-98102": {
+      "first_seen": "2026-10-15",
+      "deadline_history": [],
+      "title": "Embedded firmware internship or thesis with BLE/WiFi (Maulburg)",
+      "deadline": null,
+      "last_sent": "2026-10-15",
+      "message_id": 6702
     }
   }
 }
