@@ -1,46 +1,45 @@
 {
   "events": {
-    "updated": "2026-10-08",
+    "updated": "2026-10-15",
     "label": "📅 Events",
-    "board": "<b>═ 📅 EVENT CALENDAR ═</b>\n\n📍 <b>07–09 Oct</b> — Wave by Vento (ex Italian Tech Week), Turin <a href=\"https://t.me/c/3957539319/6450/6463\">→</a>\n✈️ <b>12 Oct–03 Dec</b> — Nordic Tech Tour EMEA (Milan stop unconfirmed) <a href=\"https://t.me/c/3957539319/6450/6459\">→</a>\n📍 <b>21 Oct</b> — NXP Technology Days, Milan <a href=\"https://t.me/c/3957539319/6450/6464\">→</a>\n📍 <b>23–25 Oct</b> — Maker Faire Rome <a href=\"https://t.me/c/3957539319/6450/6456\">→</a>\n📍 <b>03–04 Nov</b> — Espressif DevCon26, Milan <a href=\"https://t.me/c/3957539319/6450/6457\">→</a>\n✈️ <b>10–13 Nov</b> — electronica 2026, Munich <a href=\"https://electronica.de/en/visitors/tickets-prices\">→</a>\n🚀 <b>30 Nov</b> — STM32Cube Innovation Challenge · ideas due <a href=\"https://t.me/c/3957539319/6450/6461\">→</a>\n📍 <b>Monthly</b> — Italian Embedded meetup, Milan (dates unconfirmed) <a href=\"https://t.me/c/3957539319/6450/6465\">→</a>\n✈️ <b>30–31 Jan</b> — FOSDEM 2027, Brussels <a href=\"https://t.me/c/3957539319/6450/6460\">→</a>\n✈️ <b>16–18 Mar</b> — Embedded World 2027, Nuremberg <a href=\"https://www.embedded-world.de/en\">→</a>",
+    "board": "<b>═ 📅 EVENT CALENDAR ═</b>\n\n✈️ <b>12 Oct–03 Dec</b> — Nordic Tech Tour EMEA (Milan stop unconfirmed) <a href=\"https://t.me/c/3957539319/6450/6459\">→</a>\n📍 <b>21 Oct</b> — NXP Technology Days, Milan <a href=\"https://t.me/c/3957539319/6450/6464\">→</a>\n📍 <b>23–25 Oct</b> — Maker Faire Rome <a href=\"https://t.me/c/3957539319/6450/6456\">→</a>\n📍 <b>03–04 Nov</b> — Espressif DevCon26, Milan <a href=\"https://t.me/c/3957539319/6450/6457\">→</a>\n✈️ <b>10–13 Nov</b> — electronica 2026, Munich <a href=\"https://t.me/c/3957539319/6450/6543\">→</a>\n🚀 <b>05 Oct–26 Nov</b> — ESTIMED Hackathon #2, IoT meets Edge <a href=\"https://estimed.etsi.org/news\">→</a>\n🚀 <b>30 Nov</b> — STM32Cube Innovation Challenge · ideas due <a href=\"https://t.me/c/3957539319/6450/6461\">→</a>\n📍 <b>Monthly</b> — Italian Embedded meetup, Milan (dates unconfirmed) <a href=\"https://t.me/c/3957539319/6450/6465\">→</a>\n✈️ <b>30–31 Jan</b> — FOSDEM 2027, Brussels <a href=\"https://t.me/c/3957539319/6450/6460\">→</a>\n✈️ <b>16–18 Mar</b> — Embedded World 2027, Nuremberg <a href=\"https://t.me/c/3957539319/6450/6544\">→</a>",
     "keyboard": [
       [
         {
-          "text": "🇮🇹 Italy (5)",
-          "callback_data": "loc:events:Italy:7dd1a4"
+          "text": "🇮🇹 Italy (4)",
+          "callback_data": "loc:events:Italy:ef8f80"
         },
         {
           "text": "🇩🇪 Germany (2)",
-          "callback_data": "loc:events:Germany:7dd1a4"
+          "callback_data": "loc:events:Germany:ef8f80"
         },
         {
           "text": "🇧🇪 Belgium (1)",
-          "callback_data": "loc:events:Belgium:7dd1a4"
+          "callback_data": "loc:events:Belgium:ef8f80"
         }
       ],
       [
         {
           "text": "🇪🇺 EU-wide (1)",
-          "callback_data": "loc:events:EU-wide:7dd1a4"
+          "callback_data": "loc:events:EU-wide:ef8f80"
         },
         {
           "text": "💻 Online (1)",
-          "callback_data": "loc:events:Online:7dd1a4"
+          "callback_data": "loc:events:Online:ef8f80"
+        },
+        {
+          "text": "🌍 Global (1)",
+          "callback_data": "loc:events:Global:ef8f80"
         }
       ],
       [
         {
           "text": "📋 All",
-          "callback_data": "loc:events:ALL:7dd1a4"
+          "callback_data": "loc:events:ALL:ef8f80"
         }
       ]
     ],
     "lines": [
-      {
-        "html": "📍 <b>07–09 Oct</b> — Wave by Vento (ex Italian Tech Week), Turin <a href=\"https://t.me/c/3957539319/6450/6463\">→</a>",
-        "city": "Turin",
-        "country": "Italy"
-      },
       {
         "html": "✈️ <b>12 Oct–03 Dec</b> — Nordic Tech Tour EMEA (Milan stop unconfirmed) <a href=\"https://t.me/c/3957539319/6450/6459\">→</a>",
         "city": "",
@@ -62,9 +61,14 @@
         "country": "Italy"
       },
       {
-        "html": "✈️ <b>10–13 Nov</b> — electronica 2026, Munich <a href=\"https://electronica.de/en/visitors/tickets-prices\">→</a>",
+        "html": "✈️ <b>10–13 Nov</b> — electronica 2026, Munich <a href=\"https://t.me/c/3957539319/6450/6543\">→</a>",
         "city": "",
         "country": "Germany"
+      },
+      {
+        "html": "🚀 <b>05 Oct–26 Nov</b> — ESTIMED Hackathon #2, IoT meets Edge <a href=\"https://estimed.etsi.org/news\">→</a>",
+        "city": "",
+        "country": "Global"
       },
       {
         "html": "🚀 <b>30 Nov</b> — STM32Cube Innovation Challenge · ideas due <a href=\"https://t.me/c/3957539319/6450/6461\">→</a>",
@@ -82,7 +86,7 @@
         "country": "Belgium"
       },
       {
-        "html": "✈️ <b>16–18 Mar</b> — Embedded World 2027, Nuremberg <a href=\"https://www.embedded-world.de/en\">→</a>",
+        "html": "✈️ <b>16–18 Mar</b> — Embedded World 2027, Nuremberg <a href=\"https://t.me/c/3957539319/6450/6544\">→</a>",
         "city": "",
         "country": "Germany"
       }

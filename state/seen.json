@@ -89,6 +89,14 @@
       "deadline": null,
       "last_sent": "2026-10-08",
       "message_id": 6544
+    },
+    "https://estimed.etsi.org/news": {
+      "first_seen": "2026-10-15",
+      "deadline_history": [],
+      "title": "ESTIMED Hackathon #2: IoT meets Edge",
+      "deadline": null,
+      "last_sent": "2026-10-15",
+      "message_id": 6705
     }
   },
   "opportunities": {
