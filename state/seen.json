@@ -261,6 +261,14 @@
       "deadline": null,
       "last_sent": "2026-10-15",
       "message_id": 6702
+    },
+    "https://www.csem.ch/en/jobs/169054": {
+      "first_seen": "2026-10-16",
+      "deadline_history": [],
+      "title": "CSEM — PhD, continual on-tiny-device learning (ANT network, Neuchâtel)",
+      "deadline": null,
+      "last_sent": "2026-10-16",
+      "message_id": 6725
     }
   }
 }
