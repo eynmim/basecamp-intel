@@ -1715,6 +1715,12 @@
       "category": "opportunities",
       "posted_at": "2026-10-16T05:12:50.627994+00:00",
       "message_count": 5
+    },
+    "reports/news/2026-10-17.md": {
+      "sha256": "3cb594e15953df22cf58a7e0451b316ed8adf748ea7d34e864c32b9a8ce057d6",
+      "category": "news",
+      "posted_at": "2026-10-17T05:08:48.000406+00:00",
+      "message_count": 17
     }
   }
 }
