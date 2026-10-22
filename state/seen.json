@@ -97,6 +97,22 @@
       "deadline": null,
       "last_sent": "2026-10-15",
       "message_id": 6705
+    },
+    "https://www.espoo.fi/en/events/espooevents:agp767vqb4": {
+      "first_seen": "2026-10-22",
+      "deadline_history": [],
+      "title": "Junction 2026",
+      "deadline": null,
+      "last_sent": "2026-10-22",
+      "message_id": 6848
+    },
+    "https://luma.com/zf2hu9qp": {
+      "first_seen": "2026-10-22",
+      "deadline_history": [],
+      "title": "Build The Future of Personal AI, Torino",
+      "deadline": null,
+      "last_sent": "2026-10-22",
+      "message_id": 6849
     }
   },
   "opportunities": {
