@@ -1829,6 +1829,12 @@
       "category": "news",
       "posted_at": "2026-10-26T05:04:06.511261+00:00",
       "message_count": 17
+    },
+    "reports/2026-10-26.md": {
+      "sha256": "8e5d2c5edf90c1cbfbbc54f3485dbc36f442e417355126da256186ac6b152dae",
+      "category": "opportunities",
+      "posted_at": "2026-10-26T05:13:27.138024+00:00",
+      "message_count": 21
     }
   }
 }
