@@ -286,6 +286,16 @@
       "deadline": null,
       "last_sent": "2026-10-26",
       "message_id": 6932
+    },
+    "https://ntnu.edu/studies/msecs": {
+      "first_seen": "2026-10-29",
+      "deadline_history": [
+        "2027-01-31"
+      ],
+      "title": "NTNU — MSc Embedded Computing Systems (Norway)",
+      "deadline": "2027-01-31",
+      "last_sent": "2026-10-29",
+      "message_id": 7006
     }
   }
 }
