@@ -1877,6 +1877,12 @@
       "category": "events",
       "posted_at": "2026-10-29T05:33:13.091197+00:00",
       "message_count": 3
+    },
+    "reports/news/2026-10-30.md": {
+      "sha256": "38815c87f7506fbcdf9a2e372c2165ff55a3527856a6f78d91ea791ab4cdb2fd",
+      "category": "news",
+      "posted_at": "2026-10-30T05:03:24.502414+00:00",
+      "message_count": 17
     }
   }
 }
