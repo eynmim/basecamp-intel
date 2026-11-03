@@ -314,6 +314,14 @@
       "deadline": null,
       "last_sent": "2026-11-02",
       "message_id": 7105
+    },
+    "https://www.iagora.com/work/en/offer/internship-italy-it/6387213": {
+      "first_seen": "2026-11-03",
+      "deadline_history": [],
+      "title": "Bosch ETAS — Thesis internship, AUTOSAR code generation for constrained embedded systems (Turin)",
+      "deadline": null,
+      "last_sent": "2026-11-03",
+      "message_id": 7109
     }
   }
 }
