@@ -1955,6 +1955,12 @@
       "category": "opportunities",
       "posted_at": "2026-11-05T05:11:52.688790+00:00",
       "message_count": 4
+    },
+    "reports/events/2026-11-05.md": {
+      "sha256": "1f6ac7e97cae3d2ec97d3f37e6d1279e75ca8ae66786a33fde0ad4e37ff638b1",
+      "category": "events",
+      "posted_at": "2026-11-05T05:33:05.453220+00:00",
+      "message_count": 2
     }
   }
 }
