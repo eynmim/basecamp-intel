@@ -322,6 +322,30 @@
       "deadline": null,
       "last_sent": "2026-11-03",
       "message_id": 7109
+    },
+    "https://www.infineon.com/careers": {
+      "first_seen": "2026-11-07",
+      "deadline_history": [],
+      "title": "Infineon — Master thesis, embedded firmware for wireless audio tag (Munich)",
+      "deadline": null,
+      "last_sent": "2026-11-07",
+      "message_id": 7174
+    },
+    "https://imec-int.com/en/work-at-imec/job-opportunities/student-project-ble-channel-sounding-rf-localization": {
+      "first_seen": "2026-11-07",
+      "deadline_history": [],
+      "title": "imec — Student project, BLE channel sounding and RF localization (Eindhoven)",
+      "deadline": null,
+      "last_sent": "2026-11-07",
+      "message_id": 7175
+    },
+    "https://www.imec-int.com/en/work-at-imec/job-opportunities/edge-data-acquisition-and-system-characterization-real-time": {
+      "first_seen": "2026-11-07",
+      "deadline_history": [],
+      "title": "imec — Master internship, edge data acquisition and real-time system characterization (Leuven)",
+      "deadline": null,
+      "last_sent": "2026-11-07",
+      "message_id": 7176
     }
   }
 }
