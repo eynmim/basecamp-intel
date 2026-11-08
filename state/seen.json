@@ -346,6 +346,16 @@
       "deadline": null,
       "last_sent": "2026-11-07",
       "message_id": 7176
+    },
+    "https://www.aalto.fi/en/open-positions/doctoral-researcher-in-adaptive-grid-interactive-edge-datacenter-fleets-msca-doctoral-network": {
+      "first_seen": "2026-11-08",
+      "deadline_history": [
+        "2026-12-15"
+      ],
+      "title": "Aalto — MSCA doctoral researcher, adaptive grid-interactive edge datacenter fleets (AEGIS network)",
+      "deadline": "2026-12-15",
+      "last_sent": "2026-11-08",
+      "message_id": 7197
     }
   }
 }

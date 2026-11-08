@@ -1985,6 +1985,12 @@
       "category": "news",
       "posted_at": "2026-11-08T05:03:05.659733+00:00",
       "message_count": 17
+    },
+    "reports/2026-11-08.md": {
+      "sha256": "04cdb6cd4682b2ba8320bd2dbfc30355e05bb196cb7aa0f889276529a7ca4c11",
+      "category": "opportunities",
+      "posted_at": "2026-11-08T05:11:22.465406+00:00",
+      "message_count": 5
     }
   }
 }
