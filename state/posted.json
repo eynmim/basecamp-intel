@@ -1979,6 +1979,12 @@
       "category": "opportunities",
       "posted_at": "2026-11-07T05:11:53.868197+00:00",
       "message_count": 7
+    },
+    "reports/news/2026-11-08.md": {
+      "sha256": "54148981f7f14e712851c0cb68a65f7ee39823e65e3099bfe9276969ca482c19",
+      "category": "news",
+      "posted_at": "2026-11-08T05:03:05.659733+00:00",
+      "message_count": 17
     }
   }
 }
