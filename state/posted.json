@@ -1991,6 +1991,12 @@
       "category": "opportunities",
       "posted_at": "2026-11-08T05:11:22.465406+00:00",
       "message_count": 5
+    },
+    "reports/news/2026-11-09.md": {
+      "sha256": "23ed8a5176586590275ded767cb07713f4a0441a3bae29a069f97f4f5efac25a",
+      "category": "news",
+      "posted_at": "2026-11-09T05:03:20.449400+00:00",
+      "message_count": 17
     }
   }
 }
