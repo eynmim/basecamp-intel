@@ -364,6 +364,16 @@
       "deadline": null,
       "last_sent": "2026-11-10",
       "message_id": 7286
+    },
+    "https://www.polito.it/en/education/phd-programmes-and-postgraduate-school/admissions-to-phd-programmes/admissions/call-for-applications": {
+      "first_seen": "2026-11-11",
+      "deadline_history": [
+        "2026-11-16"
+      ],
+      "title": "Politecnico di Torino — PhD in Computer and Control Engineering (Secure TinyML on RISC-V and other embedded topics)",
+      "deadline": "2026-11-16",
+      "last_sent": "2026-11-11",
+      "message_id": 7307
     }
   }
 }
