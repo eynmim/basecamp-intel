@@ -123,6 +123,22 @@
       "deadline": "2026-11-30",
       "last_sent": "2026-10-29",
       "message_id": 7009
+    },
+    "https://www.nordicsemi.com/Events/2026/Embedded-Software-Engineering-Kongress-2026": {
+      "first_seen": "2026-11-12",
+      "deadline_history": [],
+      "title": "ESE Kongress 2026 (Embedded Software Engineering)",
+      "deadline": null,
+      "last_sent": "2026-11-12",
+      "message_id": 7332
+    },
+    "https://www.elektormagazine.com/articles/stm32cube-ecosystem-webinar-tools": {
+      "first_seen": "2026-11-12",
+      "deadline_history": [],
+      "title": "Elektor x ST webinar: STM32Cube ecosystem",
+      "deadline": null,
+      "last_sent": "2026-11-12",
+      "message_id": 7333
     }
   },
   "opportunities": {
