@@ -374,6 +374,22 @@
       "deadline": "2026-11-16",
       "last_sent": "2026-11-11",
       "message_id": 7307
+    },
+    "https://feki.de/jobboerse/details/36942-Master-Thesis-/-Intern-%28all-genders%29-%E2%80%93-Quantization--and-Fault-Aware-Training-and-Development-for-Neuromorphic-Computing": {
+      "first_seen": "2026-11-12",
+      "deadline_history": [],
+      "title": "Fraunhofer IIS — Master thesis / internship, quantization- and fault-aware training for neuromorphic computing (Erlangen",
+      "deadline": null,
+      "last_sent": "2026-11-12",
+      "message_id": 7328
+    },
+    "https://jobs.renesas.com/job/intern-low-cost-ble-digital-implementation-in-s-hertogenbosch-netherlands-jid-3437": {
+      "first_seen": "2026-11-12",
+      "deadline_history": [],
+      "title": "Renesas — Intern, low-cost BLE digital implementation ('s-Hertogenbosch)",
+      "deadline": null,
+      "last_sent": "2026-11-12",
+      "message_id": 7329
     }
   }
 }
