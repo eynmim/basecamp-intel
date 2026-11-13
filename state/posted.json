@@ -2051,6 +2051,12 @@
       "category": "news",
       "posted_at": "2026-11-13T05:06:28.966888+00:00",
       "message_count": 17
+    },
+    "reports/2026-11-13.md": {
+      "sha256": "ecb0963a9d2d1d70791747eb22941c5e7d3304664ae936e16ff96733c7c6a2d2",
+      "category": "opportunities",
+      "posted_at": "2026-11-13T05:13:34.586959+00:00",
+      "message_count": 6
     }
   }
 }

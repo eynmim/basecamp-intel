@@ -406,6 +406,22 @@
       "deadline": null,
       "last_sent": "2026-11-12",
       "message_id": 7329
+    },
+    "https://en.wizbii.com/company/stmicroelectronics/job/internship-genai-for-embedded-system-programming": {
+      "first_seen": "2026-11-13",
+      "deadline_history": [],
+      "title": "STMicroelectronics — Internship, GenAI for embedded system programming (STM32 drivers, Agrate Brianza)",
+      "deadline": null,
+      "last_sent": "2026-11-13",
+      "message_id": 7353
+    },
+    "https://www.imec-int.com/en/work-at-imec/job-opportunities/bare-metal-bytecode-energy-efficient-tee-hal-webassembly": {
+      "first_seen": "2026-11-13",
+      "deadline_history": [],
+      "title": "imec — PhD, energy-efficient TEE hardware abstraction layer with WebAssembly (Ghent)",
+      "deadline": null,
+      "last_sent": "2026-11-13",
+      "message_id": 7354
     }
   }
 }
