@@ -422,6 +422,16 @@
       "deadline": null,
       "last_sent": "2026-11-13",
       "message_id": 7354
+    },
+    "https://openlab.cern/cern-openlab-summer-student-programme": {
+      "first_seen": "2026-11-14",
+      "deadline_history": [
+        "2027-01-21"
+      ],
+      "title": "CERN openlab — Summer Student Programme 2027 (Geneva)",
+      "deadline": "2027-01-21",
+      "last_sent": "2026-11-14",
+      "message_id": 7375
     }
   }
 }
