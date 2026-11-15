@@ -432,6 +432,22 @@
       "deadline": "2027-01-21",
       "last_sent": "2026-11-14",
       "message_id": 7375
+    },
+    "https://www.jku.at/fileadmin/gruppen/183/Docs/Open_Positions/iotzero_wp1_phd_announcement.pdf": {
+      "first_seen": "2026-11-15",
+      "deadline_history": [],
+      "title": "JKU Linz — PhD, ultra-low-power IoT communication (Horizon Europe IoT-ZERO)",
+      "deadline": null,
+      "last_sent": "2026-11-15",
+      "message_id": 7396
+    },
+    "https://www.imec-int.com/en/work-at-imec/job-opportunities/phd-near-sensor-artificial-intelligence-distributed-systems": {
+      "first_seen": "2026-11-15",
+      "deadline_history": [],
+      "title": "imec IDLab — PhD, near-sensor AI for distributed systems",
+      "deadline": null,
+      "last_sent": "2026-11-15",
+      "message_id": 7397
     }
   }
 }
