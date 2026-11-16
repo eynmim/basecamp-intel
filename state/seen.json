@@ -170,8 +170,8 @@
       ],
       "title": "KTH — MSc Embedded Systems (Sweden)",
       "deadline": "2027-01-15",
-      "last_sent": "2026-11-09",
-      "message_id": 7218
+      "last_sent": "2026-11-16",
+      "message_id": 7419
     },
     "https://www.upv.es/estudios/master/muise/en/2026/05/28/rd-scholarship-at-fermax": {
       "first_seen": "2026-10-05",
@@ -186,8 +186,8 @@
       "deadline_history": [],
       "title": "Pro²Future — Applied &amp; Embedded AI research internships (Graz)",
       "deadline": null,
-      "last_sent": "2026-11-09",
-      "message_id": 7222
+      "last_sent": "2026-11-16",
+      "message_id": 7423
     },
     "https://www.uni-saarland.de/en/study/programmes/embedded-systems-msc.html": {
       "first_seen": "2026-10-05",
@@ -206,48 +206,48 @@
       ],
       "title": "TU Eindhoven — MSc Embedded Systems, Edge Intelligence track",
       "deadline": "2027-02-01",
-      "last_sent": "2026-11-09",
-      "message_id": 7224
+      "last_sent": "2026-11-16",
+      "message_id": 7424
     },
     "https://www.daad-iran.org/en/scholarship-database": {
       "first_seen": "2026-10-05",
       "deadline_history": [],
       "title": "DAAD Scholarships for Iranians (Germany)",
       "deadline": null,
-      "last_sent": "2026-11-09",
-      "message_id": 7228
+      "last_sent": "2026-11-16",
+      "message_id": 7430
     },
     "https://eminent-master.eu": {
       "first_seen": "2026-10-05",
       "deadline_history": [],
       "title": "Erasmus Mundus 2027–28 intake (incl. EMINENT)",
       "deadline": null,
-      "last_sent": "2026-11-09",
-      "message_id": 7229
+      "last_sent": "2026-11-16",
+      "message_id": 7431
     },
     "https://marie-sklodowska-curie-actions.ec.europa.eu/calls/msca-doctoral-networks-2026": {
       "first_seen": "2026-10-05",
       "deadline_history": [],
       "title": "MSCA Doctoral Networks — edge AI and embedded PhD positions",
       "deadline": null,
-      "last_sent": "2026-11-09",
-      "message_id": 7230
+      "last_sent": "2026-11-16",
+      "message_id": 7432
     },
     "https://www.imec-int.com/en/work-at-imec/job-opportunities/phd-researcher-brain-inspired-edge-ai-processors": {
       "first_seen": "2026-10-06",
       "deadline_history": [],
       "title": "imec — PhD researcher, brain-inspired edge AI processors (Leuven)",
       "deadline": null,
-      "last_sent": "2026-11-09",
-      "message_id": 7219
+      "last_sent": "2026-11-16",
+      "message_id": 7420
     },
     "https://www.tugraz.at/institute/iti/forschung/laufende-projekte/eu-msca-ant": {
       "first_seen": "2026-10-06",
       "deadline_history": [],
       "title": "ANT — MSCA Doctoral Network on Embedded AI Systems",
       "deadline": null,
-      "last_sent": "2026-11-09",
-      "message_id": 7220
+      "last_sent": "2026-11-16",
+      "message_id": 7421
     },
     "https://www.academictransfer.com/nl/jobs/361513/phd-in-computer-architecture-for-real-time-ai-at-the-edge": {
       "first_seen": "2026-10-08",
@@ -262,8 +262,8 @@
       "deadline_history": [],
       "title": "imec — PhD researcher, MSCA doctoral network on over-air computing for edge AI (Leuven)",
       "deadline": null,
-      "last_sent": "2026-11-09",
-      "message_id": 7232
+      "last_sent": "2026-11-16",
+      "message_id": 7434
     },
     "https://builtin.com/job/intern-low-cost-ble-digital-implementation/7107930": {
       "first_seen": "2026-10-10",
@@ -278,40 +278,40 @@
       "deadline_history": [],
       "title": "AEG Power Solutions — Working student, firmware application development (Warstein)",
       "deadline": null,
-      "last_sent": "2026-11-09",
-      "message_id": 7225
+      "last_sent": "2026-11-16",
+      "message_id": 7425
     },
     "https://jobscout24.ch/en/job/phd-position-innovation-management-for-edge-bfh-and-politecnico-turino/116122433": {
       "first_seen": "2026-10-12",
       "deadline_history": [],
       "title": "BFH + Politecnico di Torino — PhD, innovation management for edge AI (TIRAMISU network)",
       "deadline": null,
-      "last_sent": "2026-11-09",
-      "message_id": 7231
+      "last_sent": "2026-11-16",
+      "message_id": 7433
     },
     "https://www.feki.de/sites/default/files/job-dokumente/6a620a9032bf52.91446036.pdf": {
       "first_seen": "2026-10-15",
       "deadline_history": [],
       "title": "Fraunhofer IIS — Internship, firmware for energy-efficient GNSS tracker (Nuremberg)",
       "deadline": null,
-      "last_sent": "2026-11-09",
-      "message_id": 7226
+      "last_sent": "2026-11-16",
+      "message_id": 7426
     },
     "https://aijobs.net/job/praktikum-oder-abschlussarbeit-embedded-firmware-entwicklung-maulburg-de-79689-98102": {
       "first_seen": "2026-10-15",
       "deadline_history": [],
       "title": "Embedded firmware internship or thesis with BLE/WiFi (Maulburg)",
       "deadline": null,
-      "last_sent": "2026-11-09",
-      "message_id": 7227
+      "last_sent": "2026-11-16",
+      "message_id": 7427
     },
     "https://www.csem.ch/en/jobs/169054": {
       "first_seen": "2026-10-16",
       "deadline_history": [],
       "title": "CSEM — PhD, continual on-tiny-device learning (ANT network, Neuchâtel)",
       "deadline": null,
-      "last_sent": "2026-11-09",
-      "message_id": 7221
+      "last_sent": "2026-11-16",
+      "message_id": 7422
     },
     "https://ntnu.edu/studies/msecs": {
       "first_seen": "2026-10-29",
@@ -320,48 +320,48 @@
       ],
       "title": "NTNU — MSc Embedded Computing Systems (Norway)",
       "deadline": "2027-01-31",
-      "last_sent": "2026-11-09",
-      "message_id": 7233
+      "last_sent": "2026-11-16",
+      "message_id": 7435
     },
     "https://www.tue.nl/en/working-at-tue/vacancies": {
       "first_seen": "2026-11-02",
       "deadline_history": [],
       "title": "TU/e — PhD, neuromorphic SoC architectures (REACT network)",
       "deadline": null,
-      "last_sent": "2026-11-09",
-      "message_id": 7234
+      "last_sent": "2026-11-16",
+      "message_id": 7436
     },
     "https://www.iagora.com/work/en/offer/internship-italy-it/6387213": {
       "first_seen": "2026-11-03",
       "deadline_history": [],
       "title": "Bosch ETAS — Thesis internship, AUTOSAR code generation for constrained embedded systems (Turin)",
       "deadline": null,
-      "last_sent": "2026-11-09",
-      "message_id": 7235
+      "last_sent": "2026-11-16",
+      "message_id": 7437
     },
     "https://www.infineon.com/careers": {
       "first_seen": "2026-11-07",
       "deadline_history": [],
       "title": "Infineon — Master thesis, embedded firmware for wireless audio tag (Munich)",
       "deadline": null,
-      "last_sent": "2026-11-09",
-      "message_id": 7236
+      "last_sent": "2026-11-16",
+      "message_id": 7438
     },
     "https://imec-int.com/en/work-at-imec/job-opportunities/student-project-ble-channel-sounding-rf-localization": {
       "first_seen": "2026-11-07",
       "deadline_history": [],
       "title": "imec — Student project, BLE channel sounding and RF localization (Eindhoven)",
       "deadline": null,
-      "last_sent": "2026-11-09",
-      "message_id": 7237
+      "last_sent": "2026-11-16",
+      "message_id": 7439
     },
     "https://www.imec-int.com/en/work-at-imec/job-opportunities/edge-data-acquisition-and-system-characterization-real-time": {
       "first_seen": "2026-11-07",
       "deadline_history": [],
       "title": "imec — Master internship, edge data acquisition and real-time system characterization (Leuven)",
       "deadline": null,
-      "last_sent": "2026-11-09",
-      "message_id": 7238
+      "last_sent": "2026-11-16",
+      "message_id": 7440
     },
     "https://www.aalto.fi/en/open-positions/doctoral-researcher-in-adaptive-grid-interactive-edge-datacenter-fleets-msca-doctoral-network": {
       "first_seen": "2026-11-08",
@@ -370,16 +370,16 @@
       ],
       "title": "Aalto — MSCA doctoral researcher, adaptive grid-interactive edge datacenter fleets (AEGIS network)",
       "deadline": "2026-12-15",
-      "last_sent": "2026-11-09",
-      "message_id": 7239
+      "last_sent": "2026-11-16",
+      "message_id": 7418
     },
     "https://www.italdesign.it/en/company/careers/detail/thesis-project-bluetoothbased-solutions-for-vulnerable-road-user-protection-in-v2x-scenarios-662010": {
       "first_seen": "2026-11-10",
       "deadline_history": [],
       "title": "Italdesign — Thesis, Bluetooth-based protection of vulnerable road users in V2X (Turin)",
       "deadline": null,
-      "last_sent": "2026-11-10",
-      "message_id": 7286
+      "last_sent": "2026-11-16",
+      "message_id": 7441
     },
     "https://www.polito.it/en/education/phd-programmes-and-postgraduate-school/admissions-to-phd-programmes/admissions/call-for-applications": {
       "first_seen": "2026-11-11",
@@ -388,40 +388,40 @@
       ],
       "title": "Politecnico di Torino — PhD in Computer and Control Engineering (Secure TinyML on RISC-V and other embedded topics)",
       "deadline": "2026-11-16",
-      "last_sent": "2026-11-11",
-      "message_id": 7307
+      "last_sent": "2026-11-16",
+      "message_id": 7442
     },
     "https://feki.de/jobboerse/details/36942-Master-Thesis-/-Intern-%28all-genders%29-%E2%80%93-Quantization--and-Fault-Aware-Training-and-Development-for-Neuromorphic-Computing": {
       "first_seen": "2026-11-12",
       "deadline_history": [],
       "title": "Fraunhofer IIS — Master thesis / internship, quantization- and fault-aware training for neuromorphic computing (Erlangen",
       "deadline": null,
-      "last_sent": "2026-11-12",
-      "message_id": 7328
+      "last_sent": "2026-11-16",
+      "message_id": 7443
     },
     "https://jobs.renesas.com/job/intern-low-cost-ble-digital-implementation-in-s-hertogenbosch-netherlands-jid-3437": {
       "first_seen": "2026-11-12",
       "deadline_history": [],
       "title": "Renesas — Intern, low-cost BLE digital implementation ('s-Hertogenbosch)",
       "deadline": null,
-      "last_sent": "2026-11-12",
-      "message_id": 7329
+      "last_sent": "2026-11-16",
+      "message_id": 7444
     },
     "https://en.wizbii.com/company/stmicroelectronics/job/internship-genai-for-embedded-system-programming": {
       "first_seen": "2026-11-13",
       "deadline_history": [],
       "title": "STMicroelectronics — Internship, GenAI for embedded system programming (STM32 drivers, Agrate Brianza)",
       "deadline": null,
-      "last_sent": "2026-11-13",
-      "message_id": 7353
+      "last_sent": "2026-11-16",
+      "message_id": 7428
     },
     "https://www.imec-int.com/en/work-at-imec/job-opportunities/bare-metal-bytecode-energy-efficient-tee-hal-webassembly": {
       "first_seen": "2026-11-13",
       "deadline_history": [],
       "title": "imec — PhD, energy-efficient TEE hardware abstraction layer with WebAssembly (Ghent)",
       "deadline": null,
-      "last_sent": "2026-11-13",
-      "message_id": 7354
+      "last_sent": "2026-11-16",
+      "message_id": 7445
     },
     "https://openlab.cern/cern-openlab-summer-student-programme": {
       "first_seen": "2026-11-14",
@@ -430,24 +430,32 @@
       ],
       "title": "CERN openlab — Summer Student Programme 2027 (Geneva)",
       "deadline": "2027-01-21",
-      "last_sent": "2026-11-14",
-      "message_id": 7375
+      "last_sent": "2026-11-16",
+      "message_id": 7429
     },
     "https://www.jku.at/fileadmin/gruppen/183/Docs/Open_Positions/iotzero_wp1_phd_announcement.pdf": {
       "first_seen": "2026-11-15",
       "deadline_history": [],
       "title": "JKU Linz — PhD, ultra-low-power IoT communication (Horizon Europe IoT-ZERO)",
       "deadline": null,
-      "last_sent": "2026-11-15",
-      "message_id": 7396
+      "last_sent": "2026-11-16",
+      "message_id": 7446
     },
     "https://www.imec-int.com/en/work-at-imec/job-opportunities/phd-near-sensor-artificial-intelligence-distributed-systems": {
       "first_seen": "2026-11-15",
       "deadline_history": [],
       "title": "imec IDLab — PhD, near-sensor AI for distributed systems",
       "deadline": null,
-      "last_sent": "2026-11-15",
-      "message_id": 7397
+      "last_sent": "2026-11-16",
+      "message_id": 7447
+    },
+    "https://workindenmark.jobnet.dk/find-job/d93f49f4-e40c-417e-832b-7918cb1eec64": {
+      "first_seen": "2026-11-16",
+      "deadline_history": [],
+      "title": "DTU Compute — PhD scholarship, self-adaptive AI systems and embedded intelligence (REGAIN-AI)",
+      "deadline": null,
+      "last_sent": "2026-11-16",
+      "message_id": 7448
     }
   }
 }
