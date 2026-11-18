@@ -456,6 +456,14 @@
       "deadline": null,
       "last_sent": "2026-11-16",
       "message_id": 7448
+    },
+    "https://careersemea.wsa.com/jobs/6686702-working-student-embedded-software-development-and-tooling-m-f-d": {
+      "first_seen": "2026-11-18",
+      "deadline_history": [],
+      "title": "WS Audiology — Working student, embedded software development and tooling, ESP32 hearing-aid project (Erlangen)",
+      "deadline": null,
+      "last_sent": "2026-11-18",
+      "message_id": 7489
     }
   }
 }
