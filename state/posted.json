@@ -2129,6 +2129,12 @@
       "category": "opportunities",
       "posted_at": "2026-11-19T05:12:48.118630+00:00",
       "message_count": 4
+    },
+    "reports/events/2026-11-19.md": {
+      "sha256": "c631c5e8605872b8d2c339fa01d0f0f54419e95ff2af3a3595b70bb2ad60b539",
+      "category": "events",
+      "posted_at": "2026-11-19T05:32:54.381221+00:00",
+      "message_count": 2
     }
   }
 }
