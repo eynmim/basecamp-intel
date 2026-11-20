@@ -464,6 +464,14 @@
       "deadline": null,
       "last_sent": "2026-11-18",
       "message_id": 7489
+    },
+    "https://www.imec-int.com/en/work-at-imec/job-opportunities/nearin-sensor-ai-physical-ai": {
+      "first_seen": "2026-11-20",
+      "deadline_history": [],
+      "title": "imec — PhD, near/in-sensor AI for physical AI (Antwerp)",
+      "deadline": null,
+      "last_sent": "2026-11-20",
+      "message_id": 7530
     }
   }
 }
