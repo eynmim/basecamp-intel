@@ -2135,6 +2135,12 @@
       "category": "events",
       "posted_at": "2026-11-19T05:32:54.381221+00:00",
       "message_count": 2
+    },
+    "reports/news/2026-11-20.md": {
+      "sha256": "31c6a11db3b832159815ff498532c9c417305482d2d6d3ad2be3929621d54824",
+      "category": "news",
+      "posted_at": "2026-11-20T05:07:17.550005+00:00",
+      "message_count": 17
     }
   }
 }
