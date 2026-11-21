@@ -2153,6 +2153,12 @@
       "category": "news",
       "posted_at": "2026-11-21T05:05:30.963200+00:00",
       "message_count": 17
+    },
+    "reports/2026-11-21.md": {
+      "sha256": "a8398a736cb48a5565bafd1441892e43c2027e44e78ae1e99902d95e02c37238",
+      "category": "opportunities",
+      "posted_at": "2026-11-21T05:12:54.212396+00:00",
+      "message_count": 5
     }
   }
 }

@@ -472,6 +472,14 @@
       "deadline": null,
       "last_sent": "2026-11-20",
       "message_id": 7530
+    },
+    "https://www.workingstudentjobs.de/jobs/betterguards-technology-working-student-electronics-engineer-f922acca": {
+      "first_seen": "2026-11-21",
+      "deadline_history": [],
+      "title": "Betterguards Technology — Working student, electronics engineer, nRF52/Zephyr IoT product (Hennigsdorf)",
+      "deadline": null,
+      "last_sent": "2026-11-21",
+      "message_id": 7551
     }
   }
 }
